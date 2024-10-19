@@ -15,29 +15,3 @@ Redistribution and use in source and binary forms, with or without modification,
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 """
-
-"""
-    前言: QuModLibs最初为方便教学小白入门网易MOD开发设计 在早期并未考虑作为正式项目使用
-    随着该项目的发展 一些过时的代码设计需要迭代 该版本为非向下兼容更新 使用前需了解相关变动
-
-    NX13 变动更新
-    - 所有实体组件类以及EasyThread类被标记为[即将废弃], 移动到Deprecated模块
-    + 新版实体组件类 QBaseEntityComp 更加安全高性能的实现
-    + 新的线程模块(包括线程池和主线程通信方案)
-    + UIManager现在基于帧事件驱动
-    + 重构底层源代码实现 (QuMod, Server, Client, LoaderSystem等部分)
-    + QuMod模块新增函数式功能
-    - 移除QuDestroy关键词命名函数
-    + 新增DestroyFunc装饰器修饰在游戏关闭时执行的函数
-    + LensPlayer系统使用帧事件驱动 且不再需要开发者释放资源 当播放器不被使用时自动将会释放
-    + @Listen 静态注册监听现在将会按照文件module区分隔离了
-    + GLR现在支持非玩家实体的节点管理(需声明白名单/全局支持)
-    + EventsPool事件池机制 优化高频率动态监听/反监听性能表现
-    ! ATE扩展现在默认使用GLRender作为节点同步支持而不是CTRender(将在未来废弃)
-    + ATE扩展对象均采用EventPool管理事件 并且不再需要手动释放
-    + 新增Util.QTimeLine模块 用于便捷计算关键帧数据
-
-    # 如果您想要在旧版项目中使用该版本并确保兼容 请使用
-    from QuModLibs.Modules.Deprecated.Server import *
-    from QuModLibs.Modules.Deprecated.Client import *
-"""
