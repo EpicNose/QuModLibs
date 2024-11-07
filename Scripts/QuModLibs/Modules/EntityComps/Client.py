@@ -37,7 +37,7 @@ class QEntityCompService(BaseService):
     def getMemoryLiveState(self, entityId):
         """ 获取实体是否处于内存状态中 """
         comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
-        alive = comp.IsEntityAlive(entityId)
+        alive = comp.HasEntity(entityId)
         return alive
 
     def getEntityRuntime(self, entityId=""):
