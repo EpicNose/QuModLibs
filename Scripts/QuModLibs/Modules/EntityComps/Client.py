@@ -193,7 +193,7 @@ class QBaseEntityComp(_QBaseEntityComp):
         if self.entityId:
             return False
         comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
-        alive = comp.IsEntityAlive(entityId)
+        alive = comp.HasEntity(entityId)
         if not alive or not self._preVerification(entityId):
             return False
         self.entityId = entityId
