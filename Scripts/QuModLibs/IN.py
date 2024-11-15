@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from Util import SystemSide
+lambda: "By Zero123"
 
 IsServerUser = False
 ModDirName = SystemSide.__module__.split(".")[0]
@@ -10,6 +11,9 @@ class RuntimeService:
     _clientSystemList = []
     _serverStarting = False
     _clientStarting = False
+    # THREAD ID
+    _serverThreadID = None
+    _clientThreadID = None
 
 def getUnderlineModDirName():
     # type: () -> str
@@ -26,3 +30,26 @@ def getUnderlineModDirName():
         # 常规小写内容 直接追加
         newStr.append(_char)
     return "".join((chr(x) for x in newStr))
+
+def GET_THREAD_ID():
+    """ 获取当前线程ID """
+    from threading import current_thread
+    return current_thread().ident
+
+# 线程环境检查需在modMain中调用START_THREAD_ANALYSIS启用分析
+def IS_SERVER_THREAD():
+    """ 检查是不是服务端线程 """
+    return RuntimeService._serverThreadID != None and GET_THREAD_ID() == RuntimeService._serverThreadID
+
+def IS_CLIENT_THREAD():
+    """ 检查是不是客户端线程 """
+    return RuntimeService._clientThreadID != None and GET_THREAD_ID() == RuntimeService._clientThreadID
+
+def GET_THREAD_TYPE():
+    """ 获取线程类型 -1.主线程 0.服务端线程 1.客户端线程 """
+    tid = GET_THREAD_ID()
+    if tid == RuntimeService._serverThreadID:
+        return 0
+    elif tid == RuntimeService._clientThreadID:
+        return 1
+    return -1

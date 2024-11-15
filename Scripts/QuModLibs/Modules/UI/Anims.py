@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls
-from ...Client import clientApi, ListenForEvent, UnListenForEvent, levelId, Events
+from ...Client import clientApi, ListenForEvent, UnListenForEvent, levelId
 from copy import copy
 lambda: "UI动画模块 By Zero123"
 
@@ -297,20 +297,24 @@ class QAnimManager(QUIAutoControlFuntion):
         self._conAnimDict = {}  # type: dict[str, QAnimsControl]
         """ 控件动画表 """
     
+    def fpsUpdate(self):
+        comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
+        self.update(1.0 / comp.GetFps())
+    
     @classmethod
     def bindNode(cls, uiNode):
         """ 绑定节点 """
         obj = cls(uiNode)
         obj.createControl()
         return obj
-
+    
     def onCreate(self):
         QUIAutoControlFuntion.onCreate(self)
-        ListenForEvent(Events.OnScriptTickClient, self, self.update)
+        ListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
     
     def onDestroy(self):
         QUIAutoControlFuntion.onDestroy(self)
-        UnListenForEvent(Events.OnScriptTickClient, self, self.update)
+        UnListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
     
     def update(self, _time=0.033, forceUpdate=True):
         for k, v in copy(self._conAnimDict).items():

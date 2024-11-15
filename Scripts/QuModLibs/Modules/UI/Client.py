@@ -159,6 +159,8 @@ class QUICanvas:
             uiNode = self.getUiNode()
             if path.endswith(_QGridData.getRealComponentPath(uiNode)):
                 _QGridData.updateRender(uiNode)
+        from ...Util import RandomUid
+        GridComponentSizeChangedClientEvent.__name__ = RandomUid()
         _getLoaderSystem().unsafeUpdate(ListenForEvent(QGridData.EVENT_NAME, self, GridComponentSizeChangedClientEvent))
         _QGridData._sharedDict["listenFun"] = GridComponentSizeChangedClientEvent
 

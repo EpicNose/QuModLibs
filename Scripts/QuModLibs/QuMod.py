@@ -11,18 +11,19 @@ class _TempData:
     _nativePyClient = []
     _serverInitCall = []
     _clientInitCall = []
+    _threadAnalysis = False
 
 class Include:
     ctRender_v2 = False
     """ CTRender v2 资源管理系统 """
     attackExtend = False
-    """ 因商务纠纷暂已屏蔽 """
+    """ AC战斗机制 链攻击系统(商务纠纷暂已屏蔽) """
     glRender = False
     """ GLRender 玩家资源渲染系统 """
 
 @Mod.Binding(name = "QuMod_"+IN.ModDirName, version = "1.0.0")
 class QMain(object):
-    """ init入口执行逻辑  """
+    """ QuMod MAIN入口逻辑  """
     def __init__(self):
         pass
 
@@ -34,6 +35,9 @@ class QMain(object):
         self._loadServerInclude()
         self._regNativePyServer()
         self._loadServerInitFuncs()
+        if _TempData._threadAnalysis:
+            from threading import current_thread
+            IN.RuntimeService._serverThreadID = current_thread().ident
         if IN.RuntimeService._serverSystemList:
             LoaderSystem.getSystem()    # 初始化服务端加载器
 
@@ -43,6 +47,9 @@ class QMain(object):
         self._loadClientInclude()
         self._regNativePyClient()
         self._loadClientInitFuncs()
+        if _TempData._threadAnalysis:
+            from threading import current_thread
+            IN.RuntimeService._clientThreadID = current_thread().ident
         if IN.RuntimeService._clientSystemList:
             LoaderSystem.getSystem()    # 初始化客户端加载器
 
@@ -151,6 +158,14 @@ class EasyMod:
         """ 注册原生Python服务端(相对目录) """
         SERVER_REG_NATIVE_PY_SYSTEM(namespace, systemName, "{}.{}".format(self._modDirName, relPath))
         return self
+
+def START_THREAD_ANALYSIS():
+    """ 启用线程分析 """
+    _TempData._threadAnalysis = True
+
+def STOP_THREAD_ANALYSIS():
+    """ 禁用线程分析 """
+    _TempData._threadAnalysis = False
 
 def REG_SERVER_MODULE(absPath, systemName=None, _index=-1):
     # type: (str, str | None, int) -> None

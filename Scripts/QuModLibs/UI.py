@@ -180,7 +180,7 @@ class EasyScreenNodeCls(BaseScreenNode):
             Cls.IsPushScreen = IsPushScreen   
             def Register(Args={}):
                 # 智能注册UI
-                ScreenNodeClsPath = ModDirName+".QuModLibs.UIExchange."+Cls.RandomSc
+                ScreenNodeClsPath = ModDirName+".QuModLibs.UI."+Cls.RandomSc
                 clientApi.RegisterUI(ModDirName, Cls.UiName, ScreenNodeClsPath, Cls.UiDef)
 
             if NowPath in EasyScreenNodeCls.UiInitListen:
@@ -506,16 +506,16 @@ class EasyScreenNodeCls(BaseScreenNode):
         GetUi = cls.GetUi()
         if not GetUi:
             from copy import deepcopy
-            import UIExchange
+            import UI
             NewCls = deepcopy(cls.ScreenNodeCls)
-            setattr(UIExchange, cls.RandomSc, NewCls)
+            setattr(UI, cls.RandomSc, NewCls)
             # 创建UI界面
             if cls.IsPushScreen:
                 uiNode = clientApi.PushScreen(ModDirName, cls.UiName, cls.CreateParams)
             else:
                 uiNode = clientApi.CreateUI(ModDirName, cls.UiName, cls.ParamDict)
                 if not uiNode:
-                    ScreenNodeClsPath = ModDirName+".QuModLibs.UIExchange."+cls.RandomSc
+                    ScreenNodeClsPath = ModDirName+".QuModLibs.UI."+cls.RandomSc
                     clientApi.RegisterUI(ModDirName, cls.UiName, ScreenNodeClsPath, cls.UiDef)
                     uiNode = clientApi.CreateUI(ModDirName, cls.UiName, cls.ParamDict)
             # ==== 添加后处理数据信息 ====

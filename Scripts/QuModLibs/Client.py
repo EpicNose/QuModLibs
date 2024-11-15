@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # 客户端端基本功能模块 为减缓IO开销 常用的功能均放置在该文件 其他功能按需导入使用
-from Math import Vec3, Vec2
+from Math import Vec3, Vec2, QBox3D
 from Util import (
     Unknown,
     InitOperation,
@@ -231,6 +231,17 @@ class Entity(object):
         """ 获取运行时属性数据(根据MOD隔离) """
         comp = clientApi.GetEngineCompFactory().CreateModAttr(self.entityId)
         return comp.GetAttr("{}_{}".format(ModDirName, attrName), nullValue)
+
+    def getBox3D(self, useBodyRot=False):
+        # type: (bool) -> QBox3D
+        """ 获取该实体的三维空间盒对象 """
+        footPos = self.FootPos
+        if not footPos:
+            return QBox3D.createNullBox3D()
+        comp = clientApi.GetEngineCompFactory().CreateCollisionBox(self.entityId)
+        sx, sy = comp.GetSize()
+        x, y, z = footPos
+        return QBox3D(Vec3(sx, sy, sx), Vec3(x, y + sy * 0.5, z), None, rotationAngle = 0 if not useBodyRot else self.Rot[1])
 
     @property
     def Identifier(self):

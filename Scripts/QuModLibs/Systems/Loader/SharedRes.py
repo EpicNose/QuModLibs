@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from uuid import uuid4
 from ...IN import ModDirName
+from ...Util import QStruct
 
 class CallObjData:
     def __init__(self, callObj, args = tuple(), kwargs = {}):
@@ -41,15 +42,57 @@ class EasyListener:
         return self.getCustomApi(apiName)(*args, **kwargs)
 
     def _systemCallListener(self, args={}):
-        """ 系统call机制监听器 """
+        """ 系统call机制监听器(接收消息处理) """
         api = args["api"]
-        ag = args["args"]
-        kwargs = args["kw"]
+        ag = EasyListener._unPackRefArgs(args["args"])
+        kwargs = EasyListener._unPackRefDictArgs(args["kw"])
         return self.localCall(api, *ag, **kwargs)
-    
+
+    @staticmethod
+    def _unPackRefArgs(data):
+        # type: (list) -> list
+        """ Ref解包Args数据 """
+        for i, v in enumerate(data):
+            if QStruct.isSignData(v):
+                data[i] = QStruct.loadSignData(v).onNetUnPack()
+        return data
+
+    @staticmethod
+    def _unPackRefDictArgs(data):
+        # type: (dict) -> dict
+        """ Ref解包Dict Args数据 """
+        for k, v in data.items():
+            if QStruct.isSignData(v):
+                data[k] = QStruct.loadSignData(v).onNetUnPack()
+        return data
+
+    @staticmethod
+    def _packArgs(data):
+        # type: (tuple | list) -> list
+        """ 打包Args数据 """
+        newDataList = []
+        for v in data:
+            if isinstance(v, QStruct):
+                newDataList.append(v.signDumps())
+                continue
+            newDataList.append(v)
+        return newDataList
+
+    @staticmethod
+    def _packDictArgs(data):
+        # type: (dict) -> dict
+        """ 打包Dict数据 keyName=xxx """
+        newDict = {}
+        for k, v in data.items():
+            if isinstance(v, QStruct):
+                newDict[k] = v.signDumps()
+                continue
+            newDict[k] = v
+        return newDict
+
     def _packageCallArgs(self, apiName="", args=tuple(), kwargs=dict()):
-        """ 打包API参数 """
-        return {"api":apiName,"args":args,"kw":kwargs}
+        """ 打包API参数(发送消息处理) """
+        return {"api":apiName,"args":EasyListener._packArgs(args),"kw":EasyListener._packDictArgs(kwargs)}
 
     def mallocRandomMetName(self):
         """ 动态分配随机方法名 """

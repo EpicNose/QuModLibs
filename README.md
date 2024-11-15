@@ -13,7 +13,7 @@ QuModLibs最初为方便教学小白入门网易MOD开发设计 在早期并未�
 #### NX13变动内容
 1.所有实体组件类以及EasyThread类被标记为[即将废弃], 移动到Deprecated模块
 
-2.新版实体组件类 QBaseEntityComp 更加安全高性能的实现
+2.新版实体组件类 QBaseEntityComp 更加安全稳定的实现
 
 3.新的线程模块(包括线程池和主线程通信方案)
 

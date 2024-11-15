@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Math import Vec3, Vec2
+from Math import Vec3, Vec2, QBox3D
 from Util import (
     Unknown,
     InitOperation,
@@ -17,8 +17,11 @@ serverApi = __extraServerApi                        # type: extraServerApi
 TickEvent = "OnScriptTickServer"
 levelId = serverApi.GetLevelId()
 System = serverApi.GetSystem("Minecraft","game")    # type: extraServerApi
-DestroyEntity = System.DestroyEntity
 Events = _eventsRedirect                            # type: type[_EventsPrompt]
+
+def DestroyEntity(entityId):
+    """ 注销特定实体 """
+    return System.DestroyEntity(entityId)
 
 def _getLoaderSystem():
     """ 获取加载器系统 """
@@ -185,6 +188,17 @@ class Entity(object):
     def LookAt(self, otherPos=(0, 0, 0), minTime=2.0, maxTime=3.0, reject=True):
         comp = serverApi.GetEngineCompFactory().CreateRot(self.entityId)
         comp.SetEntityLookAtPos(otherPos, minTime, maxTime, reject)
+
+    def getBox3D(self, useBodyRot=False):
+        # type: (bool) -> QBox3D
+        """ 获取该实体的三维空间盒对象 """
+        footPos = self.FootPos
+        if not footPos:
+            return QBox3D.createNullBox3D()
+        comp = serverApi.GetEngineCompFactory().CreateCollisionBox(self.entityId)
+        sx, sy = comp.GetSize()
+        x, y, z = footPos
+        return QBox3D(Vec3(sx, sy, sx), Vec3(x, y + sy * 0.5, z), None, rotationAngle = 0 if not useBodyRot else self.Rot[1])
 
     def SetMarkVariant(self, value=1):
         # type: (int | float) -> bool

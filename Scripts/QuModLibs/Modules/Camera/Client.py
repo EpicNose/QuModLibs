@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ...Client import ListenForEvent, UnListenForEvent, clientApi, playerId, levelId, Entity, Vec3, Events
+from ...Client import ListenForEvent, UnListenForEvent, clientApi, playerId, levelId, Entity, Vec3
 
 lambda: "QuModLibs 摄像机模块 By Zero123"
 
@@ -46,12 +46,12 @@ class LensPlayer:
     def _createListen(self):
         if not self._isListen:
             self._isListen = True
-            ListenForEvent(Events.OnScriptTickClient, self, self.onUpdate)
+            ListenForEvent("OnScriptTickNonChaseFrameClient", self, self.onFpsUpdate)
     
     def _freeListen(self):
         if self._isListen:
             self._isListen = False
-            UnListenForEvent(Events.OnScriptTickClient, self, self.onUpdate)
+            UnListenForEvent("OnScriptTickNonChaseFrameClient", self, self.onFpsUpdate)
     
     def free(self):
         """ 释放资源 """
@@ -64,7 +64,7 @@ class LensPlayer:
         comp = clientApi.GetEngineCompFactory().CreateCamera(levelId)
         comp.LockCamera((obj.x, obj.y, obj.z), (obj.rotX, obj.rotY))
         
-    def onUpdate(self):
+    def onFpsUpdate(self):
         if not self._animObj:
             return
         if self._animObj.getTimeIsEnd(self._animTime):
@@ -74,7 +74,8 @@ class LensPlayer:
             self._animObj = None
             return
         self.loadAnim(self._animObj.getTransformationWithTime(self._animTime))
-        self._animTime += 0.033
+        comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
+        self._animTime += (1.0 / comp.GetFps()) * self._speed
     
     def play(self, animObj, speed = 1.0):
         # type: (LensAnim, float) -> None

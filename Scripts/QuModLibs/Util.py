@@ -4,6 +4,7 @@ from threading import Thread,Lock
 from Information import Version
 from types import FunctionType
 from time import time
+import pickle as _pickle
 
 class UniversalObject(object):
     """ 万用对象 """
@@ -277,3 +278,65 @@ def QThrottle(intervalTime=0.1):
             return None
         return _newFunc
     return _func
+
+class QStruct:
+    """ 结构体 用于通用数据模型约定(即不涉及任何API) 应定义在Server/Client以外的通用文件 同理Struct也不应该持有任何涉及端侧API的内容 """
+    _SIGN_FORMAT = "_QSTRUCT[{}]"
+    def dumps(self):
+        """ 序列化对象 """
+        return _pickle.dumps(self)
+
+    def signDumps(self):
+        """ 带有特征签名的序列化 """
+        data = self.dumps()
+        return [QStruct._SIGN_FORMAT.format(hex(hash(data))), data]
+
+    @staticmethod
+    def isSignData(data):
+        """ 校验数据 """
+        if not isinstance(data, list) or len(data) != 2:
+            return False
+        signKey = data[0]
+        if isinstance(signKey, str):
+            dataObj = data[1]
+            return signKey == QStruct._SIGN_FORMAT.format(hex(hash(dataObj)))
+        return False
+
+    @staticmethod
+    def loads(data):
+        # type: (str) -> QStruct
+        """ 反序列化加载对象 """
+        return _pickle.loads(data)
+
+    @staticmethod
+    def loadSignData(data):
+        # type: (list) -> QStruct
+        """ 反序列化加载Sign对象表(不会校验) """
+        return _pickle.loads(data[1])
+
+    def onNetUnPack(self):
+        return self
+
+# 为性能考虑Call不会盲目的计算每一个容器的所有数据字段 因此有了以下类型封装 在Call后将会解包原型数据
+class QRefStruct(QStruct):
+    """ 万能引用 """
+    def __init__(self, refObject):
+        self.ref = refObject
+
+    def onNetUnPack(self):
+        return self.ref
+
+class QListStruct(QStruct, list):
+    """ List容器结构 """
+    def onNetUnPack(self):
+        return list(self)
+
+class QDictStruct(QStruct, dict):
+    """ Dict容器结构 """
+    def onNetUnPack(self):
+        return dict(self)
+
+class QTupleStruct(QStruct, tuple):
+    """ Tuple容器结构 """
+    def onNetUnPack(self):
+        return tuple(self)
