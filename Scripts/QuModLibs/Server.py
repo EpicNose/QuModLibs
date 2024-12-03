@@ -19,6 +19,12 @@ levelId = serverApi.GetLevelId()
 System = serverApi.GetSystem("Minecraft","game")    # type: extraServerApi
 Events = _eventsRedirect                            # type: type[_EventsPrompt]
 
+def getOwnerPlayerId():
+    # type: () -> str | None
+    """ 获取房主玩家ID 如果存在(联机大厅/网络游戏中不存在房主玩家) """
+    from IN import RuntimeService
+    return RuntimeService._envPlayerId
+
 def DestroyEntity(entityId):
     """ 注销特定实体 """
     return System.DestroyEntity(entityId)

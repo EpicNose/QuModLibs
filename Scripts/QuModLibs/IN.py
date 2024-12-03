@@ -11,9 +11,13 @@ class RuntimeService:
     _clientSystemList = []
     _serverStarting = False
     _clientStarting = False
+    # LOADER SYSTEM
+    _serverLoadBefore = []      # type: list[function]
+    _clientLoadBefore = []      # type: list[function]
     # THREAD ID
     _serverThreadID = None
     _clientThreadID = None
+    _envPlayerId = None
 
 def getUnderlineModDirName():
     # type: () -> str

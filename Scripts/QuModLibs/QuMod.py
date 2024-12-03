@@ -44,6 +44,7 @@ class QMain(object):
     @Mod.InitClient()
     def clientInit(self):
         from Systems.Loader.Client import LoaderSystem
+        IN.RuntimeService._envPlayerId = clientApi.GetLocalPlayerId()
         self._loadClientInclude()
         self._regNativePyClient()
         self._loadClientInitFuncs()
@@ -182,14 +183,24 @@ def REG_CLIENT_MODULE(absPath, systemName=None, _index=-1):
     return IN.RuntimeService._clientSystemList.insert(_index, (absPath, systemName))
 
 def REG_SERVER_INIT_CALL(func=lambda: None):
-    # type: (object) -> None
+    # type: (function) -> None
     """ 注册服务端初始化调用函数 """
     _TempData._serverInitCall.append(func)
 
 def REG_CLIENT_INIT_CALL(func=lambda: None):
-    # type: (object) -> None
+    # type: (function) -> None
     """ 注册客户端初始化调用函数 """
     _TempData._clientInitCall.append(func)
+
+def PRE_SERVER_LOADER_HOOK(func=lambda: None):
+    # type: (function) -> None
+    """ 注册服务端加载器处理前的前置逻辑 (此时依然可以注册文件 该功能用于前置关联的校验处理) """
+    IN.RuntimeService._serverLoadBefore.append(func)
+
+def PRE_CLIENT_LOADER_HOOK(func=lambda: None):
+    # type: (function) -> None
+    """ 注册客户端加载器处理前的前置逻辑 (此时依然可以注册文件 该功能用于前置关联的校验处理) """
+    IN.RuntimeService._clientLoadBefore.append(func)
 
 def SET_MOD_NAME(_name):
     # type: (str) -> None

@@ -58,7 +58,7 @@ class LoaderSystem(ClientSystem, EasyListener):
         RuntimeService._clientStarting = True
         self.namespace = namespace
         self.systemName = systemName
-        self._systemList = RuntimeService._clientSystemList[::]
+        self._systemList = RuntimeService._clientSystemList
         self._initState = False
         self._regInitState = False
         self._waitTime = 0.0
@@ -155,6 +155,9 @@ class LoaderSystem(ClientSystem, EasyListener):
         """ 系统信息注册初始化 """
         if self._regInitState:
             return
+        # 加载Before事件
+        for funcObj in RuntimeService._clientLoadBefore:
+            TRY_EXEC_FUN(funcObj)
         # 因历史原因systemName已废弃 此处仅兼容旧版项目
         for path, _ in self._systemList:
             sysObj = None
