@@ -9,7 +9,7 @@ def hasMainMod():
     return True
 
 @PRE_SERVER_LOADER_HOOK
-def CLIENT_LOADER():
+def SERVER_LOADER():
     if hasMainMod():
         miniMod.Server("Server")
 
