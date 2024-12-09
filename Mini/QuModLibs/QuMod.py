@@ -13,14 +13,6 @@ class _TempData:
     _clientInitCall = []
     _threadAnalysis = False
 
-class Include:
-    ctRender_v2 = False
-    """ CTRender v2 资源管理系统 """
-    attackExtend = False
-    """ AC战斗机制 链攻击系统(商务纠纷暂已屏蔽) """
-    glRender = False
-    """ GLRender 玩家资源渲染系统 """
-
 @Mod.Binding(name = "QuMod_"+IN.ModDirName, version = "1.0.0")
 class QMain(object):
     """ QuMod MAIN入口逻辑  """
@@ -32,7 +24,6 @@ class QMain(object):
         # 服务端初始化
         from Systems.Loader.Server import LoaderSystem
         IN.IsServerUser = True
-        self._loadServerInclude()
         self._regNativePyServer()
         self._loadServerInitFuncs()
         if _TempData._threadAnalysis:
@@ -45,7 +36,6 @@ class QMain(object):
     def clientInit(self):
         from Systems.Loader.Client import LoaderSystem
         IN.RuntimeService._envPlayerId = clientApi.GetLocalPlayerId()
-        self._loadClientInclude()
         self._regNativePyClient()
         self._loadClientInitFuncs()
         if _TempData._threadAnalysis:
@@ -53,26 +43,6 @@ class QMain(object):
             IN.RuntimeService._clientThreadID = current_thread().ident
         if IN.RuntimeService._clientSystemList or IN.RuntimeService._clientLoadBefore:
             LoaderSystem.getSystem()    # 初始化客户端加载器
-
-    def _loadServerInclude(self):
-        """ 加载服务端Include扩展项 """
-        quModLibsPath = IN.QuModLibsPath
-        if Include.ctRender_v2:
-            REG_SERVER_MODULE(quModLibsPath + ".Include.CT_Render.ServerApi")
-        if Include.attackExtend:
-            REG_SERVER_MODULE(quModLibsPath + ".Include.AttackExtend.Server")
-        if Include.glRender:
-            REG_SERVER_MODULE(quModLibsPath + ".Include.GL_Render.Server")
-
-    def _loadClientInclude(self):
-        """ 加载客户端Include扩展项 """
-        quModLibsPath = IN.QuModLibsPath
-        if Include.ctRender_v2:
-            REG_CLIENT_MODULE(quModLibsPath + ".Include.CT_Render.ClientApi")
-        if Include.attackExtend:
-            REG_CLIENT_MODULE(quModLibsPath + ".Include.AttackExtend.Client")
-        if Include.glRender:
-            REG_CLIENT_MODULE(quModLibsPath + ".Include.GL_Render.Client")
 
     def _regNativePyClient(self):
         """ 加载原版Python客户端系统注册 """
@@ -112,7 +82,6 @@ class EasyMod:
         # type: (str | None) -> None
         self._modDirName = modDirName if modDirName else IN.ModDirName
         """ Mod目录名 """
-        self.include = Include
 
     def regServer(self, relPath="", systemName=None):
         # type: (str, str | None) -> EasyMod
