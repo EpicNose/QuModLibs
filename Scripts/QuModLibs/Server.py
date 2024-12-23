@@ -206,6 +206,45 @@ class Entity(object):
         x, y, z = footPos
         return QBox3D(Vec3(sx, sy, sx), Vec3(x, y + sy * 0.5, z), None, rotationAngle = 0 if not useBodyRot else self.Rot[1])
 
+    def callEvent(self, eventName):
+        # type: (str) -> bool
+        """ 触发JSON中特定的事件定义 """
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.TriggerCustomEvent(self.entityId, eventName)
+
+    def getComponents(self):
+        # type: () -> dict[str, object]
+        """ 获取实体持有的运行时JSON组件 """
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.GetComponents()
+
+    def removeComponent(self, compName):
+        # type: (str) -> bool
+        """ 移除特定的JSON组件 """
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.RemoveActorComponent(compName)
+
+    def addComponent(self, compName, data):
+        # type: (str, str | dict) -> bool
+        """ 添加特定的JSON组件及参数 """
+        if isinstance(data, dict):
+            from json import dumps
+            data = dumps(data)
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.AddActorComponent(compName, data)
+
+    def getBlockControlAi(self):
+        # type: () -> bool
+        """ 获取生物AI是否被屏蔽 """
+        comp = serverApi.GetEngineCompFactory().CreateControlAi(self.entityId)
+        return comp.GetBlockControlAi()
+
+    def setBlockControlAi(self, isBlock, freezeAnim=False):
+        # type: (bool, bool) -> bool
+        """ 设置生物AI是否被屏蔽 """
+        comp = serverApi.GetEngineCompFactory().CreateControlAi(self.entityId)
+        return comp.SetBlockControlAi(isBlock, freezeAnim)
+
     def SetMarkVariant(self, value=1):
         # type: (int | float) -> bool
         """ 设置对应JSON组件的MarkVariant值 对应query.mark_variant(底层同步) """
