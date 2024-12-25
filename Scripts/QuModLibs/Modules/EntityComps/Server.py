@@ -81,7 +81,7 @@ class QEntityCompService(BaseService):
     def onServiceUpdate(self):
         BaseService.onServiceUpdate(self)
         # Tick事件触发器
-        for obj in copy(self.entityCompMap.values()):
+        for obj in copy(self.entityCompMap).values():
             entityId = obj.entityId
             if not self.getMemoryLiveState(entityId) or obj.empty():
                 self.removeEntityRuntimeObjects(entityId)
@@ -92,7 +92,7 @@ class QEntityCompService(BaseService):
         BaseService.onServiceStop(self)
         self._closeState = True
         # 游戏关闭后释放所有实体运行时数据
-        for v in copy(self.entityCompMap.values()):
+        for v in copy(self.entityCompMap).values():
             TRY_EXEC_FUN(v.onFree)
         self.entityCompMap = {}
 
@@ -492,6 +492,10 @@ class QConstraintNodeComp(QBaseEntityComp):
             return self._parentRef()
         return None
 
+    def getChildsRef(self):
+        """ 获取子节点集合引用 """
+        return self._childNodeSet
+
     def addConstraintNode(self, node):
         # type: (QConstraintNodeComp) -> bool
         """ 添加并绑定一个约束节点到子集 """
@@ -505,4 +509,4 @@ class QConstraintNodeComp(QBaseEntityComp):
             # 新组件受权限声明/其他原因未能通过绑定验证
             return False
         TRY_EXEC_FUN(self.unbind)
-        return node.bind(self.entityId)
+        return self.getParent().addConstraintNode(node)
