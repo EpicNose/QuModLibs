@@ -132,7 +132,7 @@ class PLAYER_RES_SERVICE(BaseService):
         PLAYER_RES_SERVICE.localEffectListen(queryBindName, _localMobEffectListenHandler)
 
     @staticmethod
-    def loaclPlayerEffectListener(queryBindName):
+    def localPlayerEffectListener(queryBindName):
         """ localPlayerEffectListen的装饰器封装版本 """
         def _regLoader(func):
             funcName = getObjectPathName(func)
@@ -143,7 +143,7 @@ class PLAYER_RES_SERVICE(BaseService):
         return _regLoader
 
     @staticmethod
-    def loaclMobEffectListener(queryBindName):
+    def localMobEffectListener(queryBindName):
         """ localMobEffectListen的装饰器封装版本 """
         def _regLoader(func):
             funcName = getObjectPathName(func)
