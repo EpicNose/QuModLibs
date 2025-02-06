@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 from ...Client import *
-from ...Modules.Services.Client import BaseService
-from ...Util import TRY_EXEC_FUN
+from ...Util import TRY_EXEC_FUN, getObjectPathName
+from ...Modules.Services.Client import (
+    BaseService,
+    BaseEvent,
+    serviceBroadcast,
+    listenServiceEvent,
+)
 from SharedRes import (
     GL_CUSTOM_QUERY,
     JSONRenderData,
@@ -9,11 +14,38 @@ from SharedRes import (
     GL_MOB_QUERY_KEY,
 )
 lambda: "By Zero123"
-lambda: "TIME: 2024/09/05"
+lambda: "TIME: 2025/2/6"
 
 class STATIC_IN:
     FULL_MOB_QUERY_FUNC = False
     MOB_QUERY_WHITE_LIST = set()
+
+class MOB_QUERYS_UPDATE_EVENTS(BaseEvent):
+    """ 实体Querys节点更新事件 处于该事件下依然可以重定向修改节点数据 """
+    def __init__(self, entityId="-1", queryMapRef={}, isPlayer=False):
+        # type: (str, dict[str, float | object], bool) -> None
+        BaseEvent.__init__(self)
+        self.entityId = entityId
+        self.queryMapRef = queryMapRef
+        self.isPlayer = isPlayer
+
+class PLAYER_RES_REBUILD_BEFORE(BaseEvent):
+    """ 玩家资源重建事件 处于该事件下可以设置cancel拦截重建行为并重新实现 """
+    def __init__(self, entityId="-1", lazyUpdate=False):
+        # type: (str, bool) -> None
+        BaseEvent.__init__(self)
+        self.entityId = entityId
+        self.lazyUpdate = lazyUpdate
+        self.cancel = False
+
+def GL_SET_ENTITY_QUERYS_MAP(entityId, queryMap={}, isPlayer=False):
+    # type: (str, dict[str, float | object], bool) -> None
+    serviceBroadcast(MOB_QUERYS_UPDATE_EVENTS(entityId, queryMap, isPlayer))
+    comp = clientApi.GetEngineCompFactory().CreateQueryVariable(entityId)
+    # 理论上GLR支持任意数据类型的value 但只有数值类型会被设置到节点
+    for k, v in queryMap.items():
+        if isinstance(v, (float, int)):
+            comp.Set(k, v)
 
 class MOB_QUERY_COMP:
     def __init__(self, entityId=None):
@@ -35,10 +67,8 @@ class MOB_QUERY_COMP:
         self.updateQueryMap(self._toDict(newValue))
 
     def updateQueryMap(self, queryMap={}):
-        # type: (dict) -> None
-        comp = clientApi.GetEngineCompFactory().CreateQueryVariable(self.entityId)
-        for k, v in queryMap.items():
-            comp.Set(k, v)
+        # type: (dict[str, float]) -> None
+        GL_SET_ENTITY_QUERYS_MAP(self.entityId, queryMap)
 
     def onFree(self):
         comp = clientApi.GetEngineCompFactory().CreateModAttr(self.entityId)
@@ -50,6 +80,8 @@ class PLAYER_RES_SERVICE(BaseService):
     GL_RES_KEY = "Q_{}_GL.RES".format(ModDirName)
     GL_QUERY_KEY = "Q_{}_GL.QUERY".format(ModDirName)
     GL_REST_ANIM_KEY = "Q_{}_GL.REST_ANIM".format(ModDirName)
+    _LOCAL_EFFECT_LISTEN_MAP = {}   # type: dict[str, set[function]]    # 本地效果监听映射
+    _REG_LOCAL_EFFECT_FUNCNAME = set()  # 存放使用装饰器注册过的函数路径 避免热重载带来的重复定义问题
 
     @staticmethod
     def _REGISTER_QUERY():
@@ -57,6 +89,78 @@ class PLAYER_RES_SERVICE(BaseService):
         for queryName in GL_CUSTOM_QUERY.GL_QUERYS:
             comp = clientApi.GetEngineCompFactory().CreateQueryVariable(levelId)
             comp.Register(queryName, 0.0)
+
+    @staticmethod
+    def localEffectListen(queryBindName, bindFunc):
+        # type: (str, function) -> function
+        """ 建立本地效果监听(适用于绑定query动作特效的高性能同步方案) 推荐搭配组件类组合效果开发
+            回调参数: (entityId, queryValue, event)
+        """
+        _LOCAL_EFFECT_LISTEN_MAP = PLAYER_RES_SERVICE._LOCAL_EFFECT_LISTEN_MAP
+        if not _LOCAL_EFFECT_LISTEN_MAP:
+            # 初始化监听
+            listenServiceEvent(MOB_QUERYS_UPDATE_EVENTS, PLAYER_RES_SERVICE._localEffectListener)
+        if not queryBindName in _LOCAL_EFFECT_LISTEN_MAP:
+            _LOCAL_EFFECT_LISTEN_MAP[queryBindName] = set([bindFunc])
+        else:
+            _LOCAL_EFFECT_LISTEN_MAP[queryBindName].add(bindFunc)
+        return bindFunc
+
+    @staticmethod
+    def localPlayerEffectListen(queryBindName, bindFunc):
+        # type: (str, function) -> None
+        """
+            基于localEffectListen封装的玩家独占版本
+            回调参数: (entityId, queryValue)
+        """
+        def _localPlayerEffectListenHandler(entityId, queryValue, event):
+            # type: (str, float | int, MOB_QUERYS_UPDATE_EVENTS) -> None
+            if event.isPlayer:
+                return bindFunc(entityId, queryValue)
+        PLAYER_RES_SERVICE.localEffectListen(queryBindName, _localPlayerEffectListenHandler)
+
+    @staticmethod
+    def localMobEffectListen(queryBindName, bindFunc):
+        # type: (str, function) -> None
+        """
+            基于localEffectListen封装的全生物支持版本(包括玩家)
+            回调参数: (entityId, queryValue)
+        """
+        def _localMobEffectListenHandler(entityId, queryValue, _):
+            # type: (str, float | int, MOB_QUERYS_UPDATE_EVENTS) -> None
+            return bindFunc(entityId, queryValue)
+        PLAYER_RES_SERVICE.localEffectListen(queryBindName, _localMobEffectListenHandler)
+
+    @staticmethod
+    def loaclPlayerEffectListener(queryBindName):
+        """ localPlayerEffectListen的装饰器封装版本 """
+        def _regLoader(func):
+            funcName = getObjectPathName(func)
+            if not funcName in PLAYER_RES_SERVICE._REG_LOCAL_EFFECT_FUNCNAME:
+                PLAYER_RES_SERVICE._REG_LOCAL_EFFECT_FUNCNAME.add(funcName)
+                PLAYER_RES_SERVICE.localPlayerEffectListen(queryBindName, func)
+            return func
+        return _regLoader
+
+    @staticmethod
+    def loaclMobEffectListener(queryBindName):
+        """ localMobEffectListen的装饰器封装版本 """
+        def _regLoader(func):
+            funcName = getObjectPathName(func)
+            if not funcName in PLAYER_RES_SERVICE._REG_LOCAL_EFFECT_FUNCNAME:
+                PLAYER_RES_SERVICE._REG_LOCAL_EFFECT_FUNCNAME.add(funcName)
+                PLAYER_RES_SERVICE.localMobEffectListen(queryBindName, func)
+            return func
+        return _regLoader
+
+    @staticmethod
+    def _localEffectListener(event=MOB_QUERYS_UPDATE_EVENTS()):
+        _LOCAL_EFFECT_LISTEN_MAP = PLAYER_RES_SERVICE._LOCAL_EFFECT_LISTEN_MAP
+        for k, v in event.queryMapRef.items():
+            if not k in _LOCAL_EFFECT_LISTEN_MAP:
+                continue
+            for func in _LOCAL_EFFECT_LISTEN_MAP[k]:
+                TRY_EXEC_FUN(func, event.entityId, v, event)
 
     def __init__(self):
         BaseService.__init__(self)
@@ -79,14 +183,22 @@ class PLAYER_RES_SERVICE(BaseService):
         """ 实体临时持有数据 """
         self.mobQueryComps = {}     # type: dict[str, MOB_QUERY_COMP]
         """ 实体Query节点组件表 """
-    
+
+    @staticmethod
+    def rebuildPlayerRes(entityId, lazyUpdate=False):
+        event = PLAYER_RES_REBUILD_BEFORE(entityId, lazyUpdate)
+        serviceBroadcast(event)
+        if not event.cancel:
+            comp = clientApi.GetEngineCompFactory().CreateActorRender(entityId)
+            comp.RebuildPlayerRender()
+
     def getEntityTempData(self, entityId):
         # type: (str) -> dict
         """ 获取实体临时持有数据 """
         if not entityId in self.entityTempData:
             self.entityTempData[entityId] = {}
         return self.entityTempData[entityId]
-    
+
     def delEntityTempData(self, entityId):
         # type: (str) -> None
         """ 删除实体临时持有数据 """
@@ -200,8 +312,7 @@ class PLAYER_RES_SERVICE(BaseService):
                 print("[PLAYER_RES_SERVICE] 找不到相关资源操作方法: {}".format(newValue))
         if rc <= 0 or notRebuild:
             return rc
-        comp = clientApi.GetEngineCompFactory().CreateActorRender(entityId)
-        comp.RebuildPlayerRender()
+        PLAYER_RES_SERVICE.rebuildPlayerRes(entityId)
         return rc
 
     def INIT_QUERY(self, queryKey = ""):
@@ -218,13 +329,15 @@ class PLAYER_RES_SERVICE(BaseService):
         entityId = args["entityId"]
         newValue = args["newValue"]     # type: dict
         oldValue = args["oldValue"]     # type: dict | None
-        comp = clientApi.GetEngineCompFactory().CreateQueryVariable(entityId)
+        upDateMap = {}
         for k, v in newValue.items():
             if oldValue and v == oldValue.get(k, None):
                 # 重复节点数据剔除
                 continue
             self.INIT_QUERY(k)
-            comp.Set(k, v)
+            upDateMap[k] = v
+        if upDateMap:
+            GL_SET_ENTITY_QUERYS_MAP(entityId, upDateMap, True)
 
     def AUTO_RES_UPDATE(self, args):
         """ 由属性变化触发的自动资源更新 """
@@ -252,7 +365,7 @@ class PLAYER_RES_SERVICE(BaseService):
         rc += self.staticResRender(playerId)
         rc += self.GL_RES_UPDATE({"entityId": playerId, "oldValue":[], "newValue": comp.GetAttr(self.__class__.GL_RES_KEY, [])}, True)
         if rc > 0:
-            clientApi.GetEngineCompFactory().CreateActorRender(playerId).RebuildPlayerRender()
+            PLAYER_RES_SERVICE.rebuildPlayerRes(playerId, True)
         self.GL_QUERY_UPDATE({"entityId": playerId, "oldValue":{}, "newValue": comp.GetAttr(self.__class__.GL_QUERY_KEY, {})})
         # ======== ====== 为区域渲染内的玩家建立数据变更监听 ======== ======
         comp = clientApi.GetEngineCompFactory().CreateModAttr(playerId)
@@ -286,7 +399,7 @@ class PLAYER_RES_SERVICE(BaseService):
         """ AOI客户端生物取消渲染事件 """
         entityId = args["id"]
         self.freeMobQueryData(entityId)
-    
+
     def mallocMobQueryData(self, entityId=""):
         """ 分配生物节点数据 """
         if entityId in self.mobQueryComps:

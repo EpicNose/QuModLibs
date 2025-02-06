@@ -9,7 +9,7 @@ class QTimeLine:
             # type: (float, object | None) -> None
             self.timeValue = timeValue
             self.data = data
-    
+
         def __repr__(self):
             return str((self.timeValue, self.data))
 
@@ -17,11 +17,11 @@ class QTimeLine:
         """ 浮点数运算数组 """
         def __init__(self, dataList=[]):
             # type: (list[float | int]) -> None
-            self._dataList = list(dataList)
+            self._dataList = [float(v) for v in dataList]
 
         def getSize(self):
             return len(self._dataList)
-        
+
         def getList(self):
             return self._dataList
 
@@ -44,7 +44,7 @@ class QTimeLine:
 
         def __sub__(self, other=None):
             return self._addOrSub(other, -1.0)
-        
+
         def __mul__(self, other=1.0):
             newFArray = self.__class__(copy(self._dataList))
             for i, v in enumerate(newFArray._dataList):
@@ -62,6 +62,9 @@ class QTimeLine:
         # type: (dict[str | float, object], bool) -> None
         """ 从dict解析并合并到时间线表 """
         for key, value in objDict.items():
+            if isinstance(value, list):
+                # 自动处理容器类型
+                value = QTimeLine.FArray(value)
             self.addTimeNode(QTimeLine.Args(float(key), value))
         if updateNow:
             self.updateTimeLine()
@@ -108,16 +111,41 @@ class QTimeLine:
         return (timeLineList[rightIndex], timeLineList[leftIndex])
 
     def computeFrameAtTime(self, timeValue=0.0):
-        """ 计算指定时间帧值(请确保时间线不为空) 帧时间基于简单的加减法和乘法完成 对于自定义类型请确保重载对应运算符 """
-        # type: (float) -> object
+        # type: (float) -> float | object
+        """ 计算指定时间帧(请确保时间线不为空) 帧时间基于简单的加减法和乘法完成 对于自定义类型请确保重载对应运算符 """
         if timeValue >= self.getMaxFpsTime():
             return self._timeLineList[-1].data
+        elif timeValue <= self._timeLineList[0].timeValue:
+            return self._timeLineList[0].data
         l, r = self.getLRTimeNode(timeValue)
         endTime = r.timeValue
         startTime = l.timeValue
         mut = (timeValue - startTime) / (endTime - startTime)
         newValue = (r.data - l.data) * mut + l.data
         return newValue
+
+    def computeArrayFrameAtTime(self, timeValue=0.0):
+        # type: (float) -> list[float]
+        """ 适用于Array列表的特化时间帧计算 """
+        data = self.computeFrameAtTime(timeValue)
+        if isinstance(data, QTimeLine.FArray):
+            return data.getList()
+        raise RuntimeError("不受支持的类型")
+
+    def getInstantVelocity(self, currentTime=0.0, deltaTime=0.033, unit=1.0):
+        # type: (float, float, float) -> float | object
+        """ 获取经过计算转换为的瞬时量 """
+        nowValue = self.computeFrameAtTime(currentTime)
+        lastValue = self.computeFrameAtTime(currentTime - deltaTime)
+        return (nowValue - lastValue) * (1.0 / deltaTime) * (1.0 / unit)
+
+    def getArrayInstantVelocity(self, currentTime=0.0, deltaTime=0.033, unit=1.0):
+        # type: (float, float, float) -> list[float]
+        """ 适用于Array列表的特化瞬时量计算 """
+        data = self.getInstantVelocity(currentTime, deltaTime, unit)
+        if isinstance(data, QTimeLine.FArray):
+            return data.getList()
+        raise RuntimeError("不受支持的类型")
 
     def updateTimeLine(self):
         """ 更新时间线 (当动态添加/移除时需要更新数据结构) """

@@ -213,6 +213,38 @@ class Entity(object):
             return None
         return Vec3.tupleToVec(rot)
 
+    def checkSubstantive(self):
+        # type: () -> bool
+        """ 检查实体是否具有实质性(非物品/抛掷物) """
+        entityTypeEnum = clientApi.GetMinecraftEnum().EntityType
+        comp = clientApi.GetEngineCompFactory().CreateEngineType(self.entityId)
+        entityType = comp.GetEngineType()
+        if entityType & entityTypeEnum.Projectile == entityTypeEnum.Projectile or entityType & entityTypeEnum.ItemEntity == entityTypeEnum.ItemEntity:
+            return False
+        return True
+
+    def convertToWorldVec3(self, absVec):
+        # type: (Vec3) -> Vec3
+        """ 基于当前实体转换一个相对向量到世界向量 """
+        axis = Vec3(0, 1, 0)
+        f = self.getBodyDirVec3()
+        l = f.copy().rotateVector(axis, -90)
+        worldVec3 = f.multiplyOf(absVec.z).addVec(l.multiplyOf(absVec.x))
+        if worldVec3.getLength() > 0.0:
+            worldVec3.convertToUnitVector()
+            worldVec3.multiplyOf(Vec3(absVec.x, 0.0, absVec.z).getLength())
+        worldVec3.y = absVec.y
+        return worldVec3
+
+    def getBodyDirVec3(self):
+        # type: () -> Vec3
+        """ 获取基于Body方向的单位向量 """
+        vc = self.Vec3DirFromRot
+        vc.y = 0.0
+        if vc.getLength() > 0.0:
+            vc.convertToUnitVector()
+        return vc
+
     def EntityPointDistance(self, otherEntity="", errorValue=0.0):
         # type: (str, float) -> float
         """ 获取与另外一个实体对应的脚部中心点距离(若实体异常将返回errorValue) """

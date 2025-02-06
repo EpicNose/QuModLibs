@@ -22,7 +22,7 @@ class EasyListener:
     def __init__(self):
         self._callQueue = []    # type: list[CallObjData]
         self._emptyContext = EmptyContext()
-        self._QCustomAPI = {}   # type: dict[str, object]
+        self._QCustomAPI = {}   # type: dict[str, function]
     
     def regCustomApi(self, apiName="", func=lambda: None):
         """ 注册自定义API """
@@ -36,10 +36,10 @@ class EasyListener:
     def getCustomApi(self, apiName=""):
         """ 获取自定义API如果存在 """
         return self._QCustomAPI.get(apiName)
-    
+
     def localCall(self, apiName="", *args, **kwargs):
         """ 本地调用 请确保API函数存在注册 否则抛出异常 """
-        return self.getCustomApi(apiName)(*args, **kwargs)
+        return self._QCustomAPI[apiName](*args, **kwargs)
 
     def _systemCallListener(self, args={}):
         """ 系统call机制监听器(接收消息处理) """
@@ -121,7 +121,7 @@ class EasyListener:
         def _reg():
             self._easyListenForEvent(eventName, self, self._allocMethodWithOUTFunction(callFunc))
         self._callQueue.append(CallObjData(_reg))
-    
+
     def nativeListen(self, eventName="", parent=None, callFunc=lambda *_: None, updateNow=False):
         # type: (str, object, object, bool) -> CallObjData | None
         """ 原生动态监听 当updateNow声明为False时将会添加到系统队列安全的等待注册 """

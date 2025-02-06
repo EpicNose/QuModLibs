@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 from ...Client import Call, Events
-from ..EventsPool.Client import POOL_ListenForEvent
+from ..EventsPool.Client import POOL_ListenForEvent, POOL_UnListenForEvent
 
 class CallService:
     """ 通信服务封装 (客户端推荐使用) """
     _cache = []
-    _workState = False
 
     @staticmethod
     def _init():
-        if CallService._workState:
-            return
-        CallService._workState = True
-        POOL_ListenForEvent(Events.OnScriptTickClient, CallService._OnScriptTickClient)
-    
+        POOL_ListenForEvent(Events.OnScriptTickClient, CallService.updateDataPacks)
+
     @staticmethod
-    def _OnScriptTickClient(_={}):
+    def updateDataPacks(_={}):
         if len(CallService._cache) <= 0:
+            POOL_UnListenForEvent(Events.OnScriptTickClient, CallService.updateDataPacks)
             return
         Call("__calls__", CallService._cache)
         CallService._cache = []
@@ -24,12 +21,10 @@ class CallService:
     @staticmethod
     def delayCall(key, *args, **kwargs):
         # type: (str, object, object) -> None
-        """ 延迟呼叫 智能合批处理 """
+        """ 延迟合批Call 优化频繁发包性能开销(有序通信) """
         CallService._init()
-        CallService._cache.append(
-            (key, args, kwargs)
-        )
+        CallService._cache.append((key, args, kwargs))
 
     @staticmethod
     def updateNow():
-        CallService._OnScriptTickClient()
+        CallService.updateDataPacks()

@@ -52,19 +52,25 @@ class QGridData:
             break
         return _sum
     
+    def childsGen(self, uiNode):
+        """ 创建子节点生成器 包含所有已渲染的子节点根级PATH """
+        realPath = self.getRealPath(uiNode)
+        for gridPath in uiNode.GetAllChildrenPath(realPath):
+            # 通过切片拿到相对路径信息
+            absPath = gridPath[len(realPath):]  # type: str
+            if absPath.count("/") == 1:         # 判定为Grid根层级
+                yield (self.getPosWithPath(absPath) - 1, gridPath)
+
     def updateRender(self, uiNode):
         # type: (EasyScreenNodeCls) -> str
         """ 刷新渲染 """
-        realPath = self.getRealPath(uiNode)
         self.bindUpdateBeforeFunc()
-        for gridPath in uiNode.GetAllChildrenPath(realPath):
-            absPath = gridPath[len(realPath):]  # 通过切片拿到相对路径信息
-            if absPath.count("/") == 1:         # 判定为Grid根层级
-                try:
-                    self.bindFunc(gridPath, self.getPosWithPath(absPath) - 1)
-                except Exception:
-                    import traceback
-                    traceback.print_exc()
+        for index, gridPath in self.childsGen(uiNode):
+            try:
+                self.bindFunc(gridPath, index)
+            except Exception:
+                import traceback
+                traceback.print_exc()
         self.bindUpdateFinishFunc()
 
 class QUICanvas:

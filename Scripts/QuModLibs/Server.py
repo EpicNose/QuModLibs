@@ -110,6 +110,7 @@ class Entity(object):
                 "Value":self.SetValue,
                 "Max":self.SetMax
             }
+
         def __setattr__(self, Name, Value):
             """ 属性设置处理 """
             if Name in Entity.__slots__:
@@ -120,19 +121,23 @@ class Entity(object):
             else:
                 print(Entity.ErrorSet)
                 return None
+
         def SetValue(self,Value):
             """ 设置Value值 """
             comp = serverApi.GetEngineCompFactory().CreateAttr(self.entityId)
             return comp.SetAttrValue(0,Value)
+
         def SetMax(self,Value):
             """ 设置Max值 """
             comp = serverApi.GetEngineCompFactory().CreateAttr(self.entityId)
             return comp.SetAttrMaxValue(0,Value)
+
         @property
         def Value(self):
             # type: () -> int
             comp = serverApi.GetEngineCompFactory().CreateAttr(self.entityId)
             return comp.GetAttrValue(0)
+
         @property
         def Max(self):
             # type: () -> int
@@ -292,6 +297,38 @@ class Entity(object):
         comp = serverApi.GetEngineCompFactory().CreateModAttr(self.entityId)
         return comp.GetAttr("{}_{}".format(ModDirName, attrName), nullValue)
 
+    def checkSubstantive(self):
+        # type: () -> bool
+        """ 检查实体是否具有实质性(非物品/抛掷物) """
+        entityTypeEnum = serverApi.GetMinecraftEnum().EntityType
+        comp = serverApi.GetEngineCompFactory().CreateEngineType(self.entityId)
+        entityType = comp.GetEngineType()
+        if entityType & entityTypeEnum.Projectile == entityTypeEnum.Projectile or entityType & entityTypeEnum.ItemEntity == entityTypeEnum.ItemEntity:
+            return False
+        return True
+
+    def getBodyDirVec3(self):
+        # type: () -> Vec3
+        """ 获取基于Body方向的单位向量 """
+        vc = self.Vec3DirFromRot
+        vc.y = 0.0
+        if vc.getLength() > 0.0:
+            vc.convertToUnitVector()
+        return vc
+
+    def convertToWorldVec3(self, absVec):
+        # type: (Vec3) -> Vec3
+        """ 基于当前实体转换一个相对向量到世界向量 """
+        axis = Vec3(0, 1, 0)
+        f = self.getBodyDirVec3()
+        l = f.copy().rotateVector(axis, -90)
+        worldVec3 = f.multiplyOf(absVec.z).addVec(l.multiplyOf(absVec.x))
+        if worldVec3.getLength() > 0.0:
+            worldVec3.convertToUnitVector()
+            worldVec3.multiplyOf(Vec3(absVec.x, 0.0, absVec.z).getLength())
+        worldVec3.y = absVec.y
+        return worldVec3
+
     @property
     def Health(self):
         # type: () -> Entity.HealthComp
@@ -397,20 +434,7 @@ class Entity(object):
     def exeCmd(self, cmd):
         # type: (str) -> bool
         """ 使实体执行命令 """
-        if self.Identifier == Entity.Type.PLAYER:
-            # 玩家类型无需处理
-            return serverApi.GetEngineCompFactory().CreateCommand(levelId).SetCommand(cmd, self.entityId)
-        # 非玩家实体类型处理
-        playerId = self.getNearPlayer()
-        if not playerId:
-            return False
-        from Util import RandomUid
-        comp = serverApi.GetEngineCompFactory().CreateTag(self.entityId)
-        tag = RandomUid()
-        comp.AddEntityTag(tag)
-        state = serverApi.GetEngineCompFactory().CreateCommand(levelId).SetCommand("/execute as @e[tag={}] at @s run {}".format(tag, cmd), playerId)
-        comp.RemoveEntityTag(tag)
-        return state
+        return serverApi.GetEngineCompFactory().CreateCommand(levelId).SetCommand(cmd, self.entityId)
 
     def getNearPlayer(self):
         # type: () -> str | None
@@ -486,10 +510,12 @@ def __ClientRequest(PlayerId, Key, Args, Kwargs, BackKey):
         Call(PlayerId, "__DelCallBackKey__", Key)
         raise e
     Call(PlayerId, BackKey, BackData)
-    
+
 @CallBackKey("__CALL.CLIENT__")
-def __CallCLIENT(PlayerId, Key, Args, Kwargs):
-    Call(PlayerId, Key, *Args, **Kwargs)
+def __CallCLIENT(playerIdData, Key, Args, Kwargs):
+    if isinstance(playerIdData, list):
+        return MultiClientsCall(playerIdData, Key, *Args, **Kwargs)
+    return Call(playerIdData, Key, *Args, **Kwargs)
 # ================== 客户端请求实现 ==================
 
 class QuObjectConversion(__ObjectConversion):

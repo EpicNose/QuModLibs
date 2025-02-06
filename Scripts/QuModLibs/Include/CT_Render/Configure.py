@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# >>>>>>>>>>>>>>>>
+#  [WAR] CTRender即将在未来废弃 推荐使用GLRender替代相关业务
+# <<<<<<<<<<<<<<<<
 
 lambda: "By Zero123"
 

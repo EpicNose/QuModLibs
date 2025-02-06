@@ -79,4 +79,4 @@ class BaseItemService(BaseService):
     def __init__(self):
         BaseService.__init__(self)
         if self.__class__ is BaseItemService:
-            raise Exception("禁止实例化基类服务")
+            raise RuntimeError("请勿实例化基类服务")

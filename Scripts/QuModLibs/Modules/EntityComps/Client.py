@@ -75,7 +75,7 @@ class QEntityCompService(BaseService):
     def onServiceUpdate(self):
         BaseService.onServiceUpdate(self)
         # Tick事件触发器
-        for obj in copy(self.entityCompMap.values()):
+        for obj in copy(self.entityCompMap).values():
             entityId = obj.entityId
             if not self.getMemoryLiveState(entityId) or obj.empty():
                 self.removeEntityRuntimeObjects(entityId)
@@ -86,7 +86,7 @@ class QEntityCompService(BaseService):
         BaseService.onServiceStop(self)
         self._closeState = True
         # 游戏关闭后释放所有实体运行时数据
-        for v in copy(self.entityCompMap.values()):
+        for v in copy(self.entityCompMap).values():
             TRY_EXEC_FUN(v.onFree)
         self.entityCompMap = {}
 

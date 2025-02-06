@@ -3,7 +3,7 @@ from ...Util import TRY_EXEC_FUN, errorPrint
 from ..Utils.AutoExpiringObjects import QTimedExpiryMap
 from copy import copy
 from time import time
-lambda: "By Zero123 CREATE_TIME: 2024_04_20 LAST_UPDATE_TIME: 2024_05_09"
+lambda: "By Zero123 CREATE_TIME: 2024_04_20 LAST_UPDATE_TIME: 2025_1_2"
 
 class ContextNode:
     """ 上下文节点 记录了LifecycleBind加载时的上下文信息 """
@@ -191,6 +191,7 @@ class BaseTimer:
         self.loop = loop
         self.setTime = time
         self.valueTime = time
+        self._cacheUpdateTime = 0.0
 
     def call(self):
         TRY_EXEC_FUN(lambda: self.callObject(*self.argsTuple, **self.kwargsDict))
@@ -245,7 +246,7 @@ class QRequests:
                 "d": self.data,
                 "t": self.serviceTime
             }
-        
+
         @classmethod
         def loads(cls, _dic):
             # type: (dict) -> QRequests.RequestResults
@@ -283,6 +284,7 @@ class _ServiceManager:
             _callFun = lambda *_: None,
             _regCallFun = lambda *_: None
         ):
+        self._closeState = False
         self._listenForEvent = _listenForEvent
         self._unListenForEvent = _unListenForEvent
         self._callFun = _callFun
@@ -293,12 +295,12 @@ class _ServiceManager:
         self._apiMap = {}                           # type: dict[str, object]
         self.apiCallBackMap = QTimedExpiryMap()
         self._initManager()
-    
+
     def _initManager(self):
         """ 初始化管理器业务 注册Call监听之类的操作 """
         self._regCallFun(_ServiceManager.SERVICE_CALL_KEY, self._recv)
         self._regCallFun(_ServiceManager.SERVICE_CALLBAK_KEY, self._recvCallBack)
-    
+
     def _recvCallBack(self, _id, dataDict):
         """ 接收CallBack回调 """
         funObj = self.apiCallBackMap.get(_id, refresh=False)
@@ -392,10 +394,10 @@ class _ServiceManager:
         key = eventObj.__class__.getEngineKey()
         if not key in self._eventMap:
             return
-        for callObj in self._eventMap[key]:
+        for callObj in copy(self._eventMap[key]):
             TRY_EXEC_FUN(callObj.funObj, eventObj)
             eventObj._T_CONTEXT_INDEX += 1
-    
+
     def serviceListen(self, eventCls, callObj, priority = None):
         # type: (type[BaseEvent], object, int | None) -> None
         """ 服务监听
@@ -409,15 +411,17 @@ class _ServiceManager:
         self._eventMap[key].append(PRIORITY_FUN)
         if priority != None and not key in self._waitUpdateEventCls:
             self._waitUpdateEventCls.add(key)
-    
+
     def unServiceListen(self, eventCls, callObj):
         # type: (type[BaseEvent], object) -> None
         """ 单次取消服务监听 如需批量处理请使用 SERVICELISTEN_OFF_ALL 方法 """
         return self.SERVICELISTEN_OFF_ALL([(eventCls, callObj)])
-    
+
     def SERVICELISTEN_OFF_ALL(self, dataIt):
         # type: (list[tuple[type[BaseEvent], object]] | tuple[tuple[type[BaseEvent], object]]) -> None
         """ 批量取消服务监听 """
+        if self._closeState or not dataIt:
+            return
         removeMap = {}          # type: dict[str, set[object]]
         for tupData in dataIt:
             # 统计所有待移除的执行对象以及KEY
@@ -462,7 +466,7 @@ class _ServiceManager:
     def getService(self, _cls):
         # type: (type[_BaseService]) -> _BaseService | None
         return self._serviceMap.get(_cls.getUID(), None)
-    
+
     def removeService(self, _cls):
         # type: (type[_BaseService]) -> bool
         _service = self.getService(_cls)
@@ -575,26 +579,32 @@ class TimerLoader:
         self.__timerSet.remove(timer)
         return True
     
-    def _timerUpdate(self):
+    def _timerUpdate(self, updateTime=0.033):
         """ 定时器更新 """
-        if len(self.__timerSet) <= 0:
+        if not self.__timerSet:
             return
         # timer定时任务处理
         delTimerList = []         # type: list[BaseTimer]
-        tickTime = TimerLoader._TICK_TIME
-        for timer in copy(self.__timerSet):
-            timer.valueTime -= tickTime
+        callTimers = []           # type: list[BaseTimer]
+        for timer in self.__timerSet:
+            timer.valueTime -= updateTime
             if timer.valueTime > 0.0:
                 continue
-            timer.call()
+            timer._cacheUpdateTime = timer.valueTime
+            callTimers.append(timer)
             if not timer.loop:
                 # 标记删除定时器
                 delTimerList.append(timer)
             else:
                 # 重置定时器
                 timer.valueTime = timer.setTime
+        # 删除定时器
         for timer in delTimerList:
             self.removeTimer(timer)
+        # 调用触发定时器 (重新排序实现先后执行关系)
+        callTimers.sort(key=lambda v: v._cacheUpdateTime)
+        for callTimerObj in callTimers:
+            callTimerObj.call()
 
 class BaseBusiness(AnnotationLoader, TimerLoader):
     """ 基本业务类 """
@@ -605,8 +615,8 @@ class BaseBusiness(AnnotationLoader, TimerLoader):
 
     def _onCreate(self):
         self._loadAnnotation()
-        self.onCreate()
-    
+        TRY_EXEC_FUN(self.onCreate)
+
     def _onCreateError(self):
         """ 业务构建异常触发 默认提供注解反加载处理如需重写请确保此处正确回收资源 """
         self._unLoadAnnotation()
@@ -690,7 +700,7 @@ class KeyBusiness(BaseBusiness):
         if not dicKey in parentObj._sharedArgs:
             parentObj._sharedArgs[dicKey] = {}
         return parentObj._sharedArgs[dicKey]
-    
+
     def _writeKey(self):
         dicData = self.getServiceDataDic()
         dicData[self.useKey] = self
@@ -848,11 +858,13 @@ class _BaseService(IService, AnnotationLoader, TimerLoader):
             return
         try:
             _businessObj._parentObj = self
-            _businessObj._onCreate()
             self._businessSet.add(_businessObj)
+            _businessObj._onCreate()
         except Exception:
             TRY_EXEC_FUN(_businessObj._onCreateError)
             _businessObj._parentObj = None
+            if _businessObj in self._businessSet:
+                self._businessSet.remove(_businessObj)
             import traceback
             traceback.print_exc()
             raise Exception("业务构建时发生异常")
@@ -920,13 +932,13 @@ class _AutoStopService(IService):
     def onAccessed(self):
         self._SERVICE_STOP_WAIT_TIME = 0.0
         return self
-    
+
     def _onTick(self):
         self._SERVICE_STOP_WAIT_TIME += _BaseService._TICK_TIME
         if self._SERVICE_STOP_WAIT_TIME > self.STOP_SERVICE_MAX_TIME:
             TRY_EXEC_FUN(self.onServiceAutoStop)
             self.stopSelf()
             return
-        
+
     def onServiceAutoStop(self):
         pass

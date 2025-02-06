@@ -123,10 +123,11 @@ class _ItemData:
                 "newItemName": itemName,
                 "itemName": itemName,
                 "count": count,
+                "newAuxValue": aux,
                 "aux": aux
             }
         )
-    
+
     def equal(self, otherItem):
         # type: (_ItemData) -> bool
         """ 比较与另外一个物品是否相当 相同物品不同数据参数也会视为不同 """
@@ -201,7 +202,7 @@ class _ItemData:
         self.newAuxValue = _aux
         self._dicArgs["newAuxValue"] = _aux
         return True
-    
+
     def nameIsNull(self, name = ""):
         return not name or name == _ItemData.NULL_ITEM
     
@@ -283,7 +284,7 @@ class _InventoryData:
     
     def __str__(self):
         return "<{}.{} {}>".format(self.__class__.__name__, id(self), [str(x) for x in self._inventoryList])
-    
+
     def dumps(self):
         """ 返回格式化后的JSON数据 """
         return {
@@ -425,7 +426,7 @@ class _InventoryData:
         """ 返回一个物品背包生成器以便遍历操作 """
         for i in range(self._size):
             yield self.getItem(i)
-    
+
     def getItem(self, _index):
         # type: (int) -> _ItemData
         """ 基于下标索引获取物品 """

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ...Server import *
 from ...Util import TRY_EXEC_FUN
-from ...Modules.Services.Server import BaseService
+from ...Modules.Services.Server import BaseService, BaseEvent, serviceBroadcast
 from SharedRes import (
     GL_OPT_INSTRUCT,
     GL_BASE_RES_OPT,
@@ -12,7 +12,7 @@ from SharedRes import (
 from copy import copy
 from time import time
 lambda: "GLR 全局资源处理系统 By Zero123 相比CTR它更侧重与玩家资源操作的本身"
-lambda: "TIME: 2024/09/05"
+lambda: "TIME: 2025/1/03"
 
 class LineAnim:
     def __init__(self, fromValue, toValue, useTime = 1.0):
@@ -42,6 +42,19 @@ class LineAnim:
             self._nowTime = self._useTime
             return -1
         return 0
+
+class PLAYER_RES_LOAD_BEFORE(BaseEvent):
+    def __init__(self, playerId="-1", opt=GL_BASE_RES_OPT()):
+        BaseEvent.__init__(self)
+        self.playerId = playerId
+        self.resOpt = opt
+        self.redirect = None
+    
+    def isModelRes(self):
+        return self.resOpt._INSTRUCT_ID == 1
+
+    def isAnimRes(self):
+        return self.resOpt._INSTRUCT_ID == 3
 
 class GL_PLAYER_RES:
     GL_RES_KEY = "Q_{}_GL.RES".format(ModDirName)
@@ -118,9 +131,14 @@ class GL_PLAYER_RES:
         self._optPass = _optPass[::]
         self.needUpdate = needUpdate
 
-    def addOptPass(self, optObj):
-        # type: (GL_BASE_RES_OPT) -> None
+    def addOptPass(self, optObj, callEvent=True):
+        # type: (GL_BASE_RES_OPT, bool) -> None
         """ 添加资源通道操作 """
+        if callEvent:
+            event = PLAYER_RES_LOAD_BEFORE(self.entityId, optObj)
+            serviceBroadcast(event)
+            if event.redirect:
+                optObj = event.redirect
         self.needUpdate = True
         key = optObj.hashKey()
         # ============ KV键值对互斥关系的资源 ============

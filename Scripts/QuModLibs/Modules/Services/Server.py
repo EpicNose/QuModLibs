@@ -42,11 +42,28 @@ class AutoStopService(BaseService, _AutoStopService):
         _AutoStopService._onTick(self)
 
 def getServiceManager():
+    """ 获取服务管理器 """
     return _serviceManager
+
+def listenServiceEvent(eventCls, funcObj, priority=None):
+    # type: (type[BaseEvent], function, int | None) -> None
+    """ 监听服务事件 """
+    _serviceManager.serviceListen(eventCls, funcObj, priority)
+
+def unListenServiceEvent(eventCls, funcObj):
+    # type: (type[BaseEvent], function) -> None
+    """ 反监听服务事件 """
+    _serviceManager.unServiceListen(eventCls, funcObj)
+
+def serviceBroadcast(eventObj):
+    # type: (BaseEvent) -> None
+    """ 发起服务广播 """
+    _serviceManager.broadcast(eventObj)
 
 # ================= 系统级业务逻辑注册 =================
 ListenForEvent(Events.OnScriptTickServer, _serviceManager, _serviceManager.onTick)
-def _onGameOver():
+def _SERVICE_MANAGER_ON_GAME_OVER():
     BaseService._CLOSE_STATE = True
+    _serviceManager._closeState = True
     _serviceManager.removeAllService()
-_loaderSystem._onDestroyCall_LAST.append(_onGameOver)
+_loaderSystem._onDestroyCall_LAST.append(_SERVICE_MANAGER_ON_GAME_OVER)

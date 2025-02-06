@@ -78,7 +78,7 @@ class GL_KV_RES(GL_BASE_RES_OPT):
 
     def hashKey(self):
         # type: () -> str | None
-        return "{}.{}.".format(self.__class__.__name__, self.key)
+        return "{}.{}".format(self.__class__.__name__, self.key)
 
 class GL_ONCE_RES(GL_BASE_RES_OPT):
     """ 单元素资源 """

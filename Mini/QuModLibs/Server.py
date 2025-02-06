@@ -353,20 +353,7 @@ class Entity(object):
     def exeCmd(self, cmd):
         # type: (str) -> bool
         """ 使实体执行命令 """
-        if self.Identifier == Entity.Type.PLAYER:
-            # 玩家类型无需处理
-            return serverApi.GetEngineCompFactory().CreateCommand(levelId).SetCommand(cmd, self.entityId)
-        # 非玩家实体类型处理
-        playerId = self.getNearPlayer()
-        if not playerId:
-            return False
-        from Util import RandomUid
-        comp = serverApi.GetEngineCompFactory().CreateTag(self.entityId)
-        tag = RandomUid()
-        comp.AddEntityTag(tag)
-        state = serverApi.GetEngineCompFactory().CreateCommand(levelId).SetCommand("/execute as @e[tag={}] at @s run {}".format(tag, cmd), playerId)
-        comp.RemoveEntityTag(tag)
-        return state
+        return serverApi.GetEngineCompFactory().CreateCommand(levelId).SetCommand(cmd, self.entityId)
 
     def getNearPlayer(self):
         # type: () -> str | None

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from ...Client import *
 from Configure import PlayerRes, QueryList
-# CTRender即将在未来废弃 推荐使用GLRender替代相关业务
+# >>>>>>>>>>>>>>>>
+#  [WAR] CTRender即将在未来废弃 推荐使用GLRender替代相关业务
+# <<<<<<<<<<<<<<<<
 
 __InitState = False
 __PlayerRes = {

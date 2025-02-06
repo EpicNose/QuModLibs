@@ -97,7 +97,12 @@ class _QBaseEntityComp(TimerLoader):
     def onUnBind(self):
         pass
 
+    # def onRepeatBindUpdate(self, other):
+    #     # type: (_QBaseEntityComp) -> None
+    #     pass
+
     def getNeedUpdate(self):
+        # type: () -> bool
         return True
 
     def onGameTick(self):
@@ -156,7 +161,7 @@ class QEntityRuntime:
         self.compsMap = {}  # type: dict[str, set[_QBaseEntityComp]]
 
     def onTick(self):
-        for v in copy(self.compsMap.values()):
+        for v in copy(self.compsMap).values():
             for comp in copy(v):
                 # 二次校验以便应对运行时的组件remove
                 if not comp in v:
@@ -214,7 +219,7 @@ class QEntityRuntime:
             comps.remove(comp)
             TRY_EXEC_FUN(comp._onManagerFree)
         self.clearTypeName(compTypeName)
-    
+
     def removeComp(self, compTypeName="", compObj=None):
         # type: (str, _QBaseEntityComp | None) -> None
         if not compTypeName in self.compsMap:
@@ -227,7 +232,7 @@ class QEntityRuntime:
         TRY_EXEC_FUN(compObj._onManagerFree)
 
     def freeAllComps(self, _info=QUnBindIN(QUnBindIN.MOB_AUTO_REMOVED)):
-        for _st in copy(self.compsMap.values()):
+        for _st in copy(self.compsMap).values():
             for v in copy(_st):
                 v._unBindIN = _info
                 TRY_EXEC_FUN(v._onManagerFree)
