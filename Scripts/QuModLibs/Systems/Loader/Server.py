@@ -33,6 +33,13 @@ class LoaderSystem(ServerSystem, EasyListener):
     
     _REG_CALL_FUNCS = {}
     _REG_STATIC_LISTEN_FUNCS = {}
+    _DY_IMP_CACHE = {}
+
+    @staticmethod
+    def dyImportModule(modulePath):
+        if not modulePath in LoaderSystem._DY_IMP_CACHE:
+            LoaderSystem._DY_IMP_CACHE[modulePath] = serverImportModule(modulePath)
+        return LoaderSystem._DY_IMP_CACHE[modulePath]
 
     @staticmethod
     def REG_DESTROY_CALL_FUNC(func=lambda: None):
