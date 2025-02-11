@@ -22,7 +22,6 @@ class QMain(object):
     @Mod.InitServer()
     def serverInit(self):
         # 服务端初始化
-        from Systems.Loader.Server import LoaderSystem
         IN.IsServerUser = True
         self._regNativePyServer()
         self._loadServerInitFuncs()
@@ -30,11 +29,11 @@ class QMain(object):
             from threading import current_thread
             IN.RuntimeService._serverThreadID = current_thread().ident
         if IN.RuntimeService._serverSystemList or IN.RuntimeService._serverLoadBefore:
+            from Systems.Loader.Server import LoaderSystem
             LoaderSystem.getSystem()    # 初始化服务端加载器
 
     @Mod.InitClient()
     def clientInit(self):
-        from Systems.Loader.Client import LoaderSystem
         IN.RuntimeService._envPlayerId = clientApi.GetLocalPlayerId()
         self._regNativePyClient()
         self._loadClientInitFuncs()
@@ -42,6 +41,7 @@ class QMain(object):
             from threading import current_thread
             IN.RuntimeService._clientThreadID = current_thread().ident
         if IN.RuntimeService._clientSystemList or IN.RuntimeService._clientLoadBefore:
+            from Systems.Loader.Client import LoaderSystem
             LoaderSystem.getSystem()    # 初始化客户端加载器
 
     def _regNativePyClient(self):
