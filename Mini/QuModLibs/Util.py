@@ -279,6 +279,17 @@ def QThrottle(intervalTime=0.1):
         return _newFunc
     return _func
 
+class _QConstStatic:
+    initFuncSet = set()
+
+def QConstInit(funcObj):
+    """ 常量初始化函数执行(将自动检查reload) """
+    funcName = getObjectPathName(funcObj)
+    if not funcName in _QConstStatic.initFuncSet:
+        _QConstStatic.initFuncSet.add(funcName)
+        TRY_EXEC_FUN(funcObj)
+    return funcObj
+
 class QStruct:
     """ 结构体 用于通用数据模型约定(即不涉及任何API) 应定义在Server/Client以外的通用文件 同理Struct也不应该持有任何涉及端侧API的内容 """
     _SIGN_FORMAT = "_QSTRUCT[{}]"
