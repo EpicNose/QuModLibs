@@ -288,7 +288,8 @@ class QAnimsControl(QUIControlFuntion):
         """ 更新计算 """
         for v in copy(self._animSet):
             if v.update(_time, forceUpdate=forceUpdate) == -1:
-                self._animSet.remove(v)
+                if v in self._animSet:
+                    self._animSet.remove(v)
 
 class QAnimManager(QUIAutoControlFuntion):
     """ Qu动画管理器(内部基于Tick处理) """
@@ -317,6 +318,8 @@ class QAnimManager(QUIAutoControlFuntion):
         UnListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
     
     def update(self, _time=0.033, forceUpdate=True):
+        if not self._getIsLive():
+            return
         for k, v in copy(self._conAnimDict).items():
             if not v.getParentLiveState():
                 del self._conAnimDict[k]
