@@ -183,7 +183,7 @@ class QTimeLineTransform(QLineTransform):
     def __init__(self, lineDic={}):
         # type: (dict[str | float | int, list[float | int] | tuple[float | int]]) -> None
         newLineDic = {}
-        for k, v in lineDic:
+        for k, v in lineDic.items():
             if not isinstance(v, (list, tuple)):
                 v = [v]
             newLineDic[float(k)] = QTimeLine.FArray(v)
