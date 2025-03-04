@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls
 from ...Client import clientApi, ListenForEvent, UnListenForEvent, levelId
+from ..Utils.TimeLine import QTimeLine
 from copy import copy
 lambda: "UI动画模块 By Zero123"
 
@@ -42,6 +43,8 @@ class QTransform:
         self._finishCallBack = lambda *_: None
         self._easingMode = QTransform.EasingMode.Default
         """ 缓动类型 """
+        self._priority = 0
+        """ 优先级 越小越靠前执行 """
     
     def setFinishAnimBackCall(self, _callBack = lambda *_: None):
         """ 设置动画完整播放完毕的回调 """
@@ -166,6 +169,76 @@ class QuTypeWriter(QLineTransform):
             self.syncSize
         )
 
+class QNullAnimNode(QLineTransform):
+    """ 空动画节点 用于添加回调处理 其优先级靠后可以安全的作为动画的最后回调环节 """
+    def __init__(self, useTime=1, bindFunc=None):
+        # type: (float | int, function | None) -> None
+        QLineTransform.__init__(self, useTime)
+        self._priority = 10
+        if bindFunc:
+            self.setFinishAnimBackCall(bindFunc)
+
+class QTimeLineTransform(QLineTransform):
+    """ 时间线变换基类 """
+    def __init__(self, lineDic={}):
+        # type: (dict[str | float | int, list[float | int] | tuple[float | int]]) -> None
+        newLineDic = {}
+        for k, v in lineDic:
+            if not isinstance(v, (list, tuple)):
+                v = [v]
+            newLineDic[float(k)] = QTimeLine.FArray(v)
+        self._timeLine = QTimeLine(newLineDic)
+        self._maxTime = self._timeLine.getMaxFpsTime()
+        QLineTransform.__init__(self, self._maxTime)
+    
+    def onUpdate(self):
+        QLineTransform.onUpdate(self)
+        moveTime = min(self.getRatio() * self._maxTime, self._maxTime)
+        self.onLineUpdate(moveTime)
+    
+    def onLineUpdate(self, valueTime):
+        # type: (float) -> None
+        pass
+    
+    def getLineBlendData(self, valueTime):
+        # type: (float) -> list[float]
+        return self._timeLine.computeArrayFrameAtTime(valueTime)
+
+class QTimeLinePosTransform(QTimeLineTransform):
+    """ 时间线位置移动变换 """
+    def onLineUpdate(self, valueTime):
+        # type: (float) -> None
+        uiNode = self.getUiNode()
+        conObj = uiNode.GetBaseUIControl(self.getParentPath())
+        conObj.SetPosition(
+            tuple(self.getLineBlendData(valueTime))
+        )
+
+class QTimeLineAlphaTransform(QTimeLineTransform):
+    """ 时间线透明度变换 """
+    def onLineUpdate(self, valueTime):
+        # type: (float) -> None
+        uiNode = self.getUiNode()
+        conObj = uiNode.GetBaseUIControl(self.getParentPath())
+        conObj.SetAlpha(
+            self.getLineBlendData(valueTime)[0]
+        )
+
+class QTimeLineSizeTransform(QTimeLineTransform):
+    """ 时间线大小变换 """
+    def __init__(self, lineData = {}, resizeChildren=False):
+        # type: (dict, bool) -> None
+        QTimeLineTransform.__init__(self, lineData)
+        self.resizeChildren = resizeChildren
+
+    def onLineUpdate(self, valueTime):
+        # type: (float) -> None
+        uiNode = self.getUiNode()
+        conObj = uiNode.GetBaseUIControl(self.getParentPath())
+        conObj.SetSize(
+            tuple(self.getLineBlendData(valueTime)), self.resizeChildren
+        )
+
 class QAnimsControl(QUIControlFuntion):
     """ Qu动画控件资源托管 """
     class QControlINFO:
@@ -283,10 +356,12 @@ class QAnimsControl(QUIControlFuntion):
         _transformObj._uiPath = ""
         if _transformObj in self._animSet:
             self._animSet.remove(_transformObj)
-    
+
     def update(self, _time = 0.033, forceUpdate = True):
         """ 更新计算 """
-        for v in copy(self._animSet):
+        animList = list(self._animSet)
+        animList.sort(key=lambda x: x._priority)
+        for v in animList:
             if v.update(_time, forceUpdate=forceUpdate) == -1:
                 if v in self._animSet:
                     self._animSet.remove(v)
@@ -298,9 +373,9 @@ class QAnimManager(QUIAutoControlFuntion):
         self._conAnimDict = {}  # type: dict[str, QAnimsControl]
         """ 控件动画表 """
     
-    def fpsUpdate(self):
+    def fpsUpdate(self, mut=1.0):
         comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
-        self.update(1.0 / comp.GetFps())
+        self.update(1.0 / comp.GetFps() * mut)
     
     @classmethod
     def bindNode(cls, uiNode):
@@ -316,15 +391,13 @@ class QAnimManager(QUIAutoControlFuntion):
     def onDestroy(self):
         QUIAutoControlFuntion.onDestroy(self)
         UnListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
-    
-    def update(self, _time=0.033, forceUpdate=True):
-        if not self._getIsLive():
-            return
+
+    def update(self, dTime=0.033, forceUpdate=True):
         for k, v in copy(self._conAnimDict).items():
             if not v.getParentLiveState():
                 del self._conAnimDict[k]
                 continue
-            v.update(_time, forceUpdate)
+            v.update(dTime, forceUpdate)
 
     def getControlAnimObj(self, _path=""):
         # type: (str) -> QAnimsControl
