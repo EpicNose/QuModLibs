@@ -195,7 +195,7 @@ class QTimeLineTransform(QLineTransform):
         QLineTransform.onUpdate(self)
         moveTime = min(self.getRatio() * self._maxTime, self._maxTime)
         self.onLineUpdate(moveTime)
-    
+
     def onLineUpdate(self, valueTime):
         # type: (float) -> None
         pass
@@ -366,31 +366,42 @@ class QAnimsControl(QUIControlFuntion):
                 if v in self._animSet:
                     self._animSet.remove(v)
 
+    def hasAnim(self):
+        return bool(self._animSet)
+
 class QAnimManager(QUIAutoControlFuntion):
-    """ Qu动画管理器(内部基于Tick处理) """
+    """ Qu动画管理器 """
     def __init__(self, uiNode):
         QUIAutoControlFuntion.__init__(self, uiNode, "")
         self._conAnimDict = {}  # type: dict[str, QAnimsControl]
         """ 控件动画表 """
-    
+
     def fpsUpdate(self, mut=1.0):
-        comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
-        self.update(1.0 / comp.GetFps() * mut)
-    
+        if self._conAnimDict:
+            # 避免空update
+            comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
+            self.update(1.0 / comp.GetFps() * mut)
+
     @classmethod
     def bindNode(cls, uiNode):
         """ 绑定节点 """
         obj = cls(uiNode)
         obj.createControl()
         return obj
-    
+
+    def startEventUpdate(self):
+        ListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
+
+    def stopEventUpdate(self):
+        UnListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
+
     def onCreate(self):
         QUIAutoControlFuntion.onCreate(self)
-        ListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
-    
+        self.startEventUpdate()
+
     def onDestroy(self):
         QUIAutoControlFuntion.onDestroy(self)
-        UnListenForEvent("OnScriptTickNonChaseFrameClient", self, self.fpsUpdate)
+        self.stopEventUpdate()
 
     def update(self, dTime=0.033, forceUpdate=True):
         for k, v in copy(self._conAnimDict).items():
