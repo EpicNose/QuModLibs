@@ -558,6 +558,12 @@ class TimerLoader:
         """ 业务定时器 """
         pass
 
+    def getTimerSetRef(self):
+        return self.__timerSet
+    
+    def empty(self):
+        return len(self.__timerSet) <= 0
+
     def _clearAllTimer(self):
         self.__timerSet.clear()
 
