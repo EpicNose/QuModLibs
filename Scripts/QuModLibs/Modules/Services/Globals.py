@@ -561,7 +561,7 @@ class TimerLoader:
     def getTimerSetRef(self):
         return self.__timerSet
     
-    def empty(self):
+    def timerEmpty(self):
         return len(self.__timerSet) <= 0
 
     def _clearAllTimer(self):

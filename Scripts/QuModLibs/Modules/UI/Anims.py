@@ -410,6 +410,12 @@ class QAnimManager(QUIAutoControlFuntion):
                 continue
             v.update(dTime, forceUpdate)
 
+    def hasAnim(self):
+        for v in self._conAnimDict.values():
+            if v.hasAnim():
+                return True
+        return False
+
     def getControlAnimObj(self, _path=""):
         # type: (str) -> QAnimsControl
         """ 获取控件动画对象 """
