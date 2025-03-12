@@ -217,6 +217,46 @@ class QUIControlFuntion(QUICanvas):
             self._conPath = None
             self.onDestroy()
 
+class QGridBinder(QUIControlFuntion):
+    """ 网格绑定器 用于自动化管理界面中的网格/列表网格元素更新处理 """
+    def __init__(self, uiNode, parentPath=""):
+        QUIControlFuntion.__init__(self, uiNode, parentPath)
+        self._bindGridData = None
+
+    def setGridData(self, gridData):
+        # type: (QGridData) -> QGridBinder
+        self._bindGridData = gridData
+        return self
+
+    def start(self):
+        """ 启用绑定器(需手动释放) """
+        if not self._bindGridData:
+            raise RuntimeError("缺少QGridData绑定 请先通过setGridData绑定管理数据")
+        self.createControl()
+        return self
+
+    def stop(self):
+        """ 停用绑定器(释放) """
+        self.removeControl()
+        return self
+
+    def updateRender(self):
+        """ 主动触发渲染更新 将触发对应的绑定函数 """
+        self._bindGridData.updateRender(self.getUiNode())
+        return self
+
+    def getRealPath(self):
+        """ 获取真实的渲染路径 """
+        return self._bindGridData.getRealPath(self.getUiNode())
+
+    def onCreate(self):
+        QUIControlFuntion.onCreate(self)
+        self.listenQGridRender(self._bindGridData)
+
+    def onDestroy(self):
+        QUIControlFuntion.onDestroy(self)
+        self.unListenQGridRender(self._bindGridData)
+
 class QUIAutoCanvas(QUICanvas):
     """ QUI智能画布绘制类 """
     def _getIsLive(self):

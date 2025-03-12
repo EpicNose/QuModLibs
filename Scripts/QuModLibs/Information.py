@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-Version = "1.3.5"                                               # 版本信息 : str
+Version = "1.3.6"                                               # 版本信息 : str
 ApiVersion = 4                                                  # API版本 : int
 Author = "Zero123"                                              # 创作者: str
 ContactInformation = "QQ:913702423"                             # 联系方式: str
