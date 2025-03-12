@@ -36,7 +36,7 @@ class QGridData:
         """ 设置基于滚动视图的网格路径 (倘若不是直接绑定网格而是有其他父级关系时使用该方法) """
         self._gridPathBasedOnScrollView = _path
         return self
-    
+
     def getRealPath(self, uiNode):
         # type: (EasyScreenNodeCls) -> str
         """ 获取真实路径 """
@@ -279,6 +279,11 @@ class QGridBinder(QUIControlFuntion):
         self._bindGridData = gridData
         return self
 
+    def setGridDimension(self, size=(1, 1)):
+        """ 经过封装的网格元素数量调整 """
+        self.getUiNode().GetBaseUIControl(self.getRealPath()).asGrid().SetGridDimension(size)
+        return self
+
     def start(self):
         """ 启用绑定器(需手动释放) """
         if not self._bindGridData:
@@ -305,7 +310,7 @@ class QGridBinder(QUIControlFuntion):
         """ 单一渲染更新 """
         self._bindGridData.updateOnceRender(viewPath, index)
         return self
-    
+
     def clearIncrementalCache(self):
         """ 增量缓存清理 """
         self._bindGridData.clearIncrementalCache()
@@ -317,6 +322,8 @@ class QGridBinder(QUIControlFuntion):
 
     def onDestroy(self):
         QUIControlFuntion.onDestroy(self)
+        if self._bindGridData:
+            self._bindGridData.clearIncrementalCache()
         self.unListenQGridRender(self._bindGridData)
 
 class QUIAutoCanvas(QUICanvas):
