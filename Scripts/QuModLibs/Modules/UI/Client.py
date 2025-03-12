@@ -110,6 +110,7 @@ class QGridData:
         if index == None:
             index = self.getPosWithPath(viewPath) - 1
         self.bindUpdateBeforeFunc()
+        self.incrementalCallback(viewPath, index)
         self.bindFunc(viewPath, index)
         self.bindUpdateFinishFunc()
 
