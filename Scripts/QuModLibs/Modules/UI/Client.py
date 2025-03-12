@@ -8,14 +8,15 @@ lambda: "UI扩展功能 By Zero123"
 class QGridData:
     """ 网格信息 """
     EVENT_NAME = "GridComponentSizeChangedClientEvent"
-    def __init__(self, path, isScrollGrid = False, bindFunc = lambda *_: None, bindUpdateBeforeFunc = lambda *_: None, bindUpdateFinishFunc = lambda *_: None, bindGridConName = ""):
-        # type: (str, bool, object, object, object, str) -> None
+    def __init__(self, path, isScrollGrid = False, bindFunc = lambda *_: None, bindUpdateBeforeFunc = lambda *_: None, bindUpdateFinishFunc = lambda *_: None, bindGridConName = "", pushUIMode=False):
+        # type: (str, bool, object, object, object, str, bool) -> None
         self.path = path
         self.isScrollGrid = isScrollGrid
         self.bindFunc = bindFunc
         self.bindUpdateBeforeFunc = bindUpdateBeforeFunc
         self.bindUpdateFinishFunc = bindUpdateFinishFunc
         self.bindGridConName = bindGridConName
+        self._pushUIMode = pushUIMode
         self._gridPathBasedOnScrollView = ""
         self._sharedDict = {}
     
@@ -51,12 +52,18 @@ class QGridData:
                 continue
             break
         return _sum
-    
+
     def childsGen(self, uiNode):
         """ 创建子节点生成器 包含所有已渲染的子节点根级PATH """
         realPath = self.getRealPath(uiNode)
+        headPath = ""
+        if self._pushUIMode:
+            headPath = self.path[:self.path.find("/", 1)]
         for gridPath in uiNode.GetAllChildrenPath(realPath):
             # 通过切片拿到相对路径信息
+            if headPath:
+                # GetAllChildrenPath在PushUI下拿到的路径并不完整需要重新计算
+                gridPath = "{}/{}".format(headPath, gridPath)
             absPath = gridPath[len(realPath):]  # type: str
             if absPath.count("/") == 1:         # 判定为Grid根层级
                 yield (self.getPosWithPath(absPath) - 1, gridPath)
