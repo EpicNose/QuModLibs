@@ -315,6 +315,26 @@ class QGridBinder(QUIControlFuntion):
         """ 增量缓存清理 """
         self._bindGridData.clearIncrementalCache()
         return self
+    
+    def setButtonClickHandler(self, buttonPath, onClick=lambda: None):
+        """ 封装的设置按钮点击回调 """
+        def creatFun(func):
+            def _onClick(*_):
+                return func()
+            return _onClick
+        baseUIControl = self.getUiNode().GetBaseUIControl(buttonPath)
+        baseUIControl.SetTouchEnable(True)
+        buttonUIControl = baseUIControl.asButton()
+        buttonUIControl.AddTouchEventParams({"isSwallow":True})
+        buttonUIControl.SetButtonTouchUpCallback(creatFun(onClick))
+        return self
+    
+    def bindButtonClickHandler(self, buttonPath):
+        """ 封装的装饰器绑定按钮函数调用 """
+        def _wrapper(func):
+            self.setButtonClickHandler(buttonPath, func)
+            return func
+        return _wrapper
 
     def onCreate(self):
         QUIControlFuntion.onCreate(self)
