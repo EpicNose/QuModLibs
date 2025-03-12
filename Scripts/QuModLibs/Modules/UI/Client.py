@@ -218,7 +218,17 @@ class QUIControlFuntion(QUICanvas):
             self.onDestroy()
 
 class QGridBinder(QUIControlFuntion):
-    """ 网格绑定器 用于自动化管理界面中的网格/列表网格元素更新处理 """
+    """ 网格绑定器 用于自动化管理界面中的网格/列表网格元素更新处理
+        self.gridBinder = QGridBinder(self).setGridData(
+            QGridData(...)
+        )
+
+        def Create(self):
+            self.gridBinder.start()
+        
+        def Destroy(self):
+            self.gridBinder.stop()
+    """
     def __init__(self, uiNode, parentPath=""):
         QUIControlFuntion.__init__(self, uiNode, parentPath)
         self._bindGridData = None
