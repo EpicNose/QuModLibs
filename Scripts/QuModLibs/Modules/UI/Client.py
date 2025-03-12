@@ -8,18 +8,30 @@ lambda: "UI扩展功能 By Zero123"
 class QGridData:
     """ 网格信息 """
     EVENT_NAME = "GridComponentSizeChangedClientEvent"
-    def __init__(self, path, isScrollGrid = False, bindFunc = lambda *_: None, bindUpdateBeforeFunc = lambda *_: None, bindUpdateFinishFunc = lambda *_: None, bindGridConName = "", pushUIMode=False):
-        # type: (str, bool, object, object, object, str, bool) -> None
+    def __init__(self, path, isScrollGrid = False, bindFunc = lambda *_: None, incrementalCallback = lambda *_: None, bindUpdateBeforeFunc = lambda *_: None, bindUpdateFinishFunc = lambda *_: None, bindGridConName = "", pushUIMode=False):
+        # type: (str, bool, function, function, function, function, str, bool) -> None
+        """
+            - path 路径
+            - isScrollGrid 列表网格渲染模式
+            - bindFunc 绑定渲染更新函数 function[str, int] 接收路径与index
+            - incrementalCallback 绑定增量更新函数 参数同bindFunc
+            - bindUpdateBeforeFunc 绑定一轮更新触发回调之前的前置业务逻辑
+            - bindUpdateFinishFunc 绑定一轮更新触发回调完毕后的业务逻辑
+            - bindGridConName 绑定网格格子控件名(当名字本身包含数字结尾时会影响index计算 显性声明名字可以解决这个问题)
+            - [重要] pushUIMode 适用于PushUI界面的处理模式 用于修正字节点路径的缺失问题
+        """
         self.path = path
         self.isScrollGrid = isScrollGrid
         self.bindFunc = bindFunc
+        self.incrementalCallback = incrementalCallback
         self.bindUpdateBeforeFunc = bindUpdateBeforeFunc
         self.bindUpdateFinishFunc = bindUpdateFinishFunc
         self.bindGridConName = bindGridConName
+        self._lastRenderCacheSet = set()    # type: set[tuple[str, int]]
         self._pushUIMode = pushUIMode
         self._gridPathBasedOnScrollView = ""
         self._sharedDict = {}
-    
+
     def setGridPathBasedOnScrollView(self, _path=""):
         """ 设置基于滚动视图的网格路径 (倘若不是直接绑定网格而是有其他父级关系时使用该方法) """
         self._gridPathBasedOnScrollView = _path
@@ -68,16 +80,37 @@ class QGridData:
             if absPath.count("/") == 1:         # 判定为Grid根层级
                 yield (self.getPosWithPath(absPath) - 1, gridPath)
 
+    def clearIncrementalCache(self):
+        """ 清理增量缓存 """
+        self._lastRenderCacheSet.clear()
+
     def updateRender(self, uiNode):
-        # type: (EasyScreenNodeCls) -> str
+        # type: (EasyScreenNodeCls) -> None
         """ 刷新渲染 """
         self.bindUpdateBeforeFunc()
+        lastRenderCache = self._lastRenderCacheSet
+        nowRenderSet = set()
         for index, gridPath in self.childsGen(uiNode):
+            args = (gridPath, index)
+            nowRenderSet.add(args)
             try:
+                # 增量渲染更新
+                if not args in lastRenderCache:
+                    self.incrementalCallback(args[0], args[1])
                 self.bindFunc(gridPath, index)
             except Exception:
                 import traceback
                 traceback.print_exc()
+        self._lastRenderCacheSet = nowRenderSet
+        self.bindUpdateFinishFunc()
+
+    def updateOnceRender(self, viewPath, index=None):
+        # type: (str, int | None) -> None
+        """ 单一渲染更新 """
+        if index == None:
+            index = self.getPosWithPath(viewPath) - 1
+        self.bindUpdateBeforeFunc()
+        self.bindFunc(viewPath, index)
         self.bindUpdateFinishFunc()
 
 class QUICanvas:
@@ -265,6 +298,17 @@ class QGridBinder(QUIControlFuntion):
     def getRealPath(self):
         """ 获取真实的渲染路径 """
         return self._bindGridData.getRealPath(self.getUiNode())
+
+    def updateOnceRender(self, viewPath, index=None):
+        # type: (str, int | None) -> QGridBinder
+        """ 单一渲染更新 """
+        self._bindGridData.updateOnceRender(viewPath, index)
+        return self
+    
+    def clearIncrementalCache(self):
+        """ 增量缓存清理 """
+        self._bindGridData.clearIncrementalCache()
+        return self
 
     def onCreate(self):
         QUIControlFuntion.onCreate(self)
