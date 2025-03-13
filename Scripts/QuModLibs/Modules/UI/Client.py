@@ -18,7 +18,7 @@ class QGridData:
             - bindUpdateBeforeFunc 绑定一轮更新触发回调之前的前置业务逻辑
             - bindUpdateFinishFunc 绑定一轮更新触发回调完毕后的业务逻辑
             - bindGridConName 绑定网格格子控件名(当名字本身包含数字结尾时会影响index计算 显性声明名字可以解决这个问题)
-            - [重要] pushUIMode 适用于PushUI界面的处理模式 用于修正字节点路径的缺失问题
+            - [旧版实现已废弃] pushUIMode 适用于PushUI界面的处理模式 用于修正字节点路径的缺失问题
         """
         self.path = path
         self.isScrollGrid = isScrollGrid
@@ -68,17 +68,21 @@ class QGridData:
     def childsGen(self, uiNode):
         """ 创建子节点生成器 包含所有已渲染的子节点根级PATH """
         realPath = self.getRealPath(uiNode)
-        headPath = ""
-        if self._pushUIMode:
-            headPath = self.path[:self.path.find("/", 1)]
-        for gridPath in uiNode.GetAllChildrenPath(realPath):
-            # 通过切片拿到相对路径信息
-            if headPath:
-                # GetAllChildrenPath在PushUI下拿到的路径并不完整需要重新计算
-                gridPath = "{}/{}".format(headPath, gridPath)
-            absPath = gridPath[len(realPath):]  # type: str
-            if absPath.count("/") == 1:         # 判定为Grid根层级
-                yield (self.getPosWithPath(absPath) - 1, gridPath)
+        # 旧版实现已废弃 使用GetChildrenName接口避免子节点递归
+        # headPath = ""
+        # if self._pushUIMode:
+        #     headPath = self.path[:self.path.find("/", 1)]
+        # for gridPath in uiNode.GetAllChildrenPath(realPath):
+        #     # 通过切片拿到相对路径信息
+        #     if headPath:
+        #         # GetAllChildrenPath在PushUI下拿到的路径并不完整需要重新计算
+        #         gridPath = "{}/{}".format(headPath, gridPath)
+        #     absPath = gridPath[len(realPath):]  # type: str
+        #     if absPath.count("/") == 1:         # 判定为Grid根层级
+        #         yield (self.getPosWithPath(absPath) - 1, gridPath)
+        for childName in uiNode.GetChildrenName(realPath):
+            gridPath = "{}/{}".format(realPath, childName)
+            yield (self.getPosWithPath(gridPath) - 1, gridPath)
 
     def clearIncrementalCache(self):
         """ 清理增量缓存 """
