@@ -65,9 +65,9 @@ class ScreenNodeWrapper(ScreenNode):
         return clientApi.PopTopUI()
 
     @classmethod
-    def removeUserClsUI(cls):
+    def removeClsUI(cls, uiKey=""):
         """ 删除用户的当前UI实例 """
-        uiNode = cls.getUiNode()
+        uiNode = cls.getUiNode(uiKey)
         if uiNode:
             uiNode.SetRemove()
             return True
