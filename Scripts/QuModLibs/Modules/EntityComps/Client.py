@@ -207,21 +207,30 @@ class QBaseEntityComp(_QBaseEntityComp):
     def _free(self):
         QEntityCompService.access().getTempEntityRuntimeObject(self.entityId).removeComp(self.getTypeName(), self)
 
-class EntityCacheMap(QBaseEntityComp):
-    """ 实体缓存Map """
+class EntityCacheData(QBaseEntityComp):
+    """ 实体缓存数据 """
     def __init__(self):
         QBaseEntityComp.__init__(self)
         self._cacheMap = dict()
 
+    def onBind(self):
+        QBaseEntityComp.onBind(self)
+        self.addTimer(QBaseEntityComp.Timer(self.checkData, time=1.0, loop=True))
+    
+    def checkData(self):
+        if not self._cacheMap:
+            self.unbind()
+
     @staticmethod
     def getEntityCacheMap(entityId):
-        return EntityCacheMap.getEntityCacheComp(entityId)._cacheMap
+        """ 获取实体缓存Map (为考虑性能优化 空缓存表会被自动清理 每次操作前都建议实时获取) """
+        return EntityCacheData.getEntityCacheComp(entityId)._cacheMap
 
     @staticmethod
     def getEntityCacheComp(entityId):
-        comp = EntityCacheMap.getComp(entityId)
+        comp = EntityCacheData.getComp(entityId)
         if comp:
             return comp
-        newComp = EntityCacheMap()
+        newComp = EntityCacheData()
         newComp.bind(entityId)
         return newComp
