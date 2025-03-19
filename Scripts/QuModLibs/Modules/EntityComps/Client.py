@@ -206,3 +206,22 @@ class QBaseEntityComp(_QBaseEntityComp):
 
     def _free(self):
         QEntityCompService.access().getTempEntityRuntimeObject(self.entityId).removeComp(self.getTypeName(), self)
+
+class EntityCacheMap(QBaseEntityComp):
+    """ 实体缓存Map """
+    def __init__(self):
+        QBaseEntityComp.__init__(self)
+        self._cacheMap = dict()
+
+    @staticmethod
+    def getEntityCacheMap(entityId):
+        return EntityCacheMap.getEntityCacheComp(entityId)._cacheMap
+
+    @staticmethod
+    def getEntityCacheComp(entityId):
+        comp = EntityCacheMap.getComp(entityId)
+        if comp:
+            return comp
+        newComp = EntityCacheMap()
+        newComp.bind(entityId)
+        return newComp
