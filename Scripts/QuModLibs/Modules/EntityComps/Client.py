@@ -224,7 +224,7 @@ class EntityCacheData(QBaseEntityComp):
             self.unbind()
 
     @staticmethod
-    def getEntityCacheMap(entityId):
+    def getCacheMap(entityId):
         """ 获取实体缓存Map (为考虑性能优化 空缓存表会被自动清理 每次操作前都建议实时获取) """
         return EntityCacheData.getEntityCacheComp(entityId)._cacheMap
 
