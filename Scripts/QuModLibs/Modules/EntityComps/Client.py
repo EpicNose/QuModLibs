@@ -75,6 +75,8 @@ class QEntityCompService(BaseService):
     def onServiceUpdate(self):
         BaseService.onServiceUpdate(self)
         # Tick事件触发器
+        if not self.entityCompMap:
+            return
         for obj in copy(self.entityCompMap).values():
             entityId = obj.entityId
             if not self.getMemoryLiveState(entityId) or obj.empty():

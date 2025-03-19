@@ -81,6 +81,8 @@ class QEntityCompService(BaseService):
     def onServiceUpdate(self):
         BaseService.onServiceUpdate(self)
         # Tick事件触发器
+        if not self.entityCompMap:
+            return
         for obj in copy(self.entityCompMap).values():
             entityId = obj.entityId
             if not self.getMemoryLiveState(entityId) or obj.empty():
@@ -520,7 +522,7 @@ class EntityCacheData(QBaseEntityComp):
     def onBind(self):
         QBaseEntityComp.onBind(self)
         self.addTimer(QBaseEntityComp.Timer(self.checkData, time=1.0, loop=True))
-    
+
     def checkData(self):
         if not self._cacheMap:
             self.unbind()

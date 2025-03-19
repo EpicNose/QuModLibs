@@ -161,6 +161,8 @@ class QEntityRuntime:
         self.compsMap = {}  # type: dict[str, set[_QBaseEntityComp]]
 
     def onTick(self):
+        if not self.compsMap:
+            return
         for v in copy(self.compsMap).values():
             for comp in copy(v):
                 # 二次校验以便应对运行时的组件remove
