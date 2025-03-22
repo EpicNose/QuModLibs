@@ -527,16 +527,16 @@ class EntityCacheData(QBaseEntityComp):
         if not self._cacheMap:
             self.unbind()
 
-    @classmethod
-    def getCacheMap(cls, entityId):
+    @staticmethod
+    def getCacheMap(entityId):
         """ 获取实体缓存Map (为考虑性能优化 空缓存表会被自动清理 每次操作前都建议实时获取) """
-        return cls.getEntityCacheComp(entityId)._cacheMap
+        return EntityCacheData.getEntityCacheComp(entityId)._cacheMap
 
-    @classmethod
-    def getEntityCacheComp(cls, entityId):
-        comp = cls.getComp(entityId)
+    @staticmethod
+    def getEntityCacheComp(entityId):
+        comp = EntityCacheData.getComp(entityId)
         if comp:
             return comp
-        newComp = cls()
+        newComp = EntityCacheData()
         newComp.bind(entityId)
         return newComp
