@@ -25,6 +25,12 @@ def getOwnerPlayerId():
     from IN import RuntimeService
     return RuntimeService._envPlayerId
 
+def regModLoadFinishHandler(func):
+    """ 注册Mod加载完毕后触发的Handler """
+    from IN import RuntimeService
+    RuntimeService._serverLoadFinish.append(func)
+    return func
+
 def DestroyEntity(entityId):
     """ 注销特定实体 """
     return System.DestroyEntity(entityId)

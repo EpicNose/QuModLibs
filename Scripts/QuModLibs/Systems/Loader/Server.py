@@ -187,3 +187,6 @@ class LoaderSystem(ServerSystem, EasyListener):
                 continue
             # if not systemName: systemName = uuid4().hex
         self._regInitState = True
+        # 加载Finish事件
+        for funcObj in RuntimeService._serverLoadFinish:
+            TRY_EXEC_FUN(funcObj)

@@ -24,6 +24,12 @@ levelId = clientApi.GetLevelId()
 playerId = clientApi.GetLocalPlayerId() 
 Events = _eventsRedirect                            # type: type[_EventsPrompt]
 
+def regModLoadFinishHandler(func):
+    """ 注册Mod加载完毕后触发的Handler """
+    from IN import RuntimeService
+    RuntimeService._clientLoadFinish.append(func)
+    return func
+
 def creatTemporaryContainer():
     return type("TemporaryContainer",(object,),{})()
 
