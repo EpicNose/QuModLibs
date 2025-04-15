@@ -13,6 +13,7 @@ TARGET_CONFIG.json 用于声明目标参数
     // 打包忽略文件 若当前工具放置在项目中 请确保忽略自身
     "ignore": [
         "*.exe",
+        "TARGET_CONFIG.json",
         "*/TARGET_CONFIG.json",
         "*/.mcs/*",
         "*/.git/*",

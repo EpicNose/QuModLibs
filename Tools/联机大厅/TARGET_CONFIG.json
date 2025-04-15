@@ -5,6 +5,7 @@
     // 打包忽略文件
     "ignore": [
         "*.exe",
+        "TARGET_CONFIG.json",
         "*/TARGET_CONFIG.json",
         "*/.mcs/*",
         "*/.git/*",
