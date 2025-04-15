@@ -147,6 +147,24 @@ class QTimeLine:
             return data.getList()
         raise RuntimeError("不受支持的类型")
 
+    def getAverageVelocity(self, startTime=0.0, endTime=0.033, unit=1.0):
+        # type: (float, float, float) -> float | object
+        """ 获取指定时间区间内的平均速度 """
+        startValue = self.computeFrameAtTime(startTime)
+        endValue = self.computeFrameAtTime(endTime)
+        deltaTime = endTime - startTime
+        if deltaTime == 0.0:
+            return 0.0  # 避免除以0
+        return (endValue - startValue) * (1.0 / deltaTime) * (1.0 / unit)
+    
+    def getArrayAverageVelocity(self, startTime=0.0, endTime=0.033, unit=1.0):
+        # type: (float, float, float) -> list[float]
+        """ 适用于Array列表的特化平均变化量计算 """
+        data = self.getAverageVelocity(startTime, endTime, unit)
+        if isinstance(data, QTimeLine.FArray):
+            return data.getList()
+        raise RuntimeError("不受支持的类型")
+
     def updateTimeLine(self):
         """ 更新时间线 (当动态添加/移除时需要更新数据结构) """
         self._timeLineList.sort(key=lambda x: x.timeValue)
