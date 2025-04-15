@@ -5,11 +5,11 @@
     // 打包忽略文件
     "ignore": [
         "*.exe",
-        "TARGET_CONFIG.json",
-        ".mcs",
-        ".git",
-        ".gitignore",
-        "studio.json",
-        "work.mcscfg"
+        "*/TARGET_CONFIG.json",
+        "*/.mcs/*",
+        "*/.git/*",
+        "*/.gitignore",
+        "*/studio.json",
+        "*/work.mcscfg"
     ]
 }
