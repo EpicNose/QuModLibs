@@ -13,6 +13,7 @@ from Util import (
 from Client import ListenForEvent, UnListenForEvent
 from types import MethodType
 from functools import wraps
+lambda: "By Zero123"
 
 __all__ = [
     "ScreenNodeWrapper", "EasyScreenNodeCls", "ESNC"
@@ -20,7 +21,7 @@ __all__ = [
 
 _BASE_SCREEN_NODE_CLS = ScreenNode
 
-class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv):
+class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
     """ 封装界面节点类 按类隔离命名空间与Key名 """
     # 若需要更加复杂的功能支持, 请使用: Modules/UI/EnhancedUI.py
     _AUTO_REGISTER_UI_MAP = {}
@@ -138,7 +139,7 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv):
 
 # ================================================
 # 因历史原因 以下功能将在未来逐步废弃 不推荐继续使用
-# 替代模块: Modules.UI.Client/Anim
+# 替代模块: Modules.UI.*
 # ================================================
 
 class QuGridObject(object):
