@@ -2,7 +2,14 @@
 from QuClientApi.ui.screenNode import ScreenNode as BaseScreenNode
 from mod.client.ui.screenNode import ScreenNode
 import mod.client.extraClientApi as clientApi
-from Util import ModDirName, RandomUid, ExceptionHandling, getObjectPathName, TRY_EXEC_FUN
+from Util import (
+    ModDirName,
+    RandomUid,
+    ExceptionHandling,
+    getObjectPathName,
+    TRY_EXEC_FUN,
+    QDRAIIEnv
+)
 from Client import ListenForEvent, UnListenForEvent
 from types import MethodType
 from functools import wraps
@@ -11,12 +18,16 @@ __all__ = [
     "ScreenNodeWrapper", "EasyScreenNodeCls", "ESNC"
 ]
 
-class ScreenNodeWrapper(ScreenNode):
+_BASE_SCREEN_NODE_CLS = ScreenNode
+
+class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv):
     """ 封装界面节点类 按类隔离命名空间与Key名 """
+    # 若需要更加复杂的功能支持, 请使用: Modules/UI/EnhancedUI.py
     _AUTO_REGISTER_UI_MAP = {}
 
     def __init__(self, namespace, name, param):
-        ScreenNode.__init__(self, namespace, name, param)
+        _BASE_SCREEN_NODE_CLS.__init__(self, namespace, name, param)
+        QDRAIIEnv.__init__(self)
 
     @staticmethod
     def _AUTO_REGISTER_UI_FINISH_EVENT(_={}):
@@ -27,7 +38,7 @@ class ScreenNodeWrapper(ScreenNode):
     def autoRegister(uiScreenDef):
         """ 自动注册装饰器 """
         def _autoRegister(cls):
-            uiCls = cls # type: ScreenNodeWrapper
+            uiCls = cls # type: type[ScreenNodeWrapper]
             key = uiCls._createUiKey()
             if not ScreenNodeWrapper._AUTO_REGISTER_UI_MAP:
                 # 初始化内部监听管理
@@ -109,6 +120,21 @@ class ScreenNodeWrapper(ScreenNode):
             self.setButtonClickHandler(buttonPath, func)
             return func
         return _wrapper
+
+    def Create(self):
+        """ UI_CREATE方法 请确保重写后调用父级 """
+        _BASE_SCREEN_NODE_CLS.Create(self)
+        # RAII资源管理初始化
+        self.setDRAIIEnvState(True)
+        self.loadALLDRAIIRes()
+
+    def Destroy(self):
+        """ UI_DESTROY方法 请确保重写后调用父级 """
+        _BASE_SCREEN_NODE_CLS.Destroy(self)
+        # RAII资源管理析构
+        if self._draiiEnvState:
+            self.setDRAIIEnvState(False)
+            self.freeALLRAIIRes()
 
 # ================================================
 # 因历史原因 以下功能将在未来逐步废弃 不推荐继续使用

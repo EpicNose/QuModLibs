@@ -3,14 +3,21 @@ from ...Util import TRY_EXEC_FUN, errorPrint
 from ..Utils.AutoExpiringObjects import QTimedExpiryMap
 from copy import copy
 from time import time
-lambda: "By Zero123 CREATE_TIME: 2024_04_20 LAST_UPDATE_TIME: 2025_1_2"
+lambda: "By Zero123 CREATE_TIME: 2024_04_20 LAST_UPDATE_TIME: 2025_4_18"
 
 class ContextNode:
     """ 上下文节点 记录了LifecycleBind加载时的上下文信息 """
-    def __init__(self, _baseService, funObj):
-        # type: (_BaseService | BaseBusiness, object) -> None
-        self._baseService = _baseService
+    def __init__(self, contextNode, funObj):
+        # type: (object, function) -> None
+        self.contextNode = contextNode
         self.funObj = funObj
+
+class SERContextNode(ContextNode):
+    """ 服务上下文节点 记录了LifecycleBind加载时的上下文信息 """
+    def __init__(self, contextNode, funObj):
+        # type: (_BaseService | BaseBusiness | object, function) -> None
+        ContextNode.__init__(self, contextNode, funObj)
+        self._baseService = contextNode
 
 class LifecycleBind:
     """ 生命周期绑定 通常与服务注解搭配 """
@@ -31,13 +38,13 @@ class LifecycleBind:
     @classmethod
     def ON_ALL_LOAD(cls, nodeSelf):
         # type: (ContextNode) -> None
-        """ 当服务中的所有注解处理加载完毕 此处的nodeSelf无法拿到funObj """
+        """ 当服务中的所有注解处理加载完毕 服务中此处的nodeSelf无法拿到funObj """
         pass
 
     @classmethod
     def ON_ALL_OFF_LOAD(cls, nodeSelf):
         # type: (ContextNode) -> None
-        """ 当服务中的所有注解处理取消加载完毕 此处的nodeSelf无法拿到funObj """
+        """ 当服务中的所有注解处理取消加载完毕 服务中此处的nodeSelf无法拿到funObj """
         pass
 
     @classmethod
@@ -64,11 +71,11 @@ class ListenData(LifecycleBind):
         self.eventName = eventName
 
     def onLoad(self, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         return nodeSelf._baseService.listenForEvent(self.eventName, nodeSelf.funObj)
 
     def onUnLoad(self, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         return nodeSelf._baseService.unListenForEvent(self.eventName, nodeSelf.funObj)
 
 class LoopTimerData(LifecycleBind):
@@ -78,7 +85,9 @@ class LoopTimerData(LifecycleBind):
 
     def onLoad(self, nodeSelf):
         # type: (ContextNode) -> None
-        return nodeSelf._baseService.addTimer(_BaseService.Timer(nodeSelf.funObj, loop=True, time=self.callTime))
+        contextNode = nodeSelf.contextNode
+        if isinstance(contextNode, TimerLoader):
+            contextNode.addTimer(_BaseService.Timer(nodeSelf.funObj, loop=True, time=self.callTime))
 
 class ServiceListenData(LifecycleBind):
     def __init__(self, eventCls, priority = None):
@@ -88,7 +97,7 @@ class ServiceListenData(LifecycleBind):
         self.priority = priority
 
     def onLoad(self, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         sharedArgs = nodeSelf._baseService._sharedArgs
         key = self.__class__.__name__
         if not key in sharedArgs:
@@ -98,7 +107,7 @@ class ServiceListenData(LifecycleBind):
 
     @classmethod
     def ON_ALL_LOAD(cls, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         """ 当服务中的所有注解处理加载完毕 此处的nodeSelf无法拿到funObj """
         _this = nodeSelf._baseService
         sharedArgs = _this._sharedArgs
@@ -111,7 +120,7 @@ class ServiceListenData(LifecycleBind):
 
     @classmethod
     def ON_ALL_OFF_LOAD(cls, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         """ 当服务中的所有注解处理取消加载完毕 此处的nodeSelf无法拿到funObj """
         _this = nodeSelf._baseService
         sharedArgs = _this._sharedArgs
@@ -129,7 +138,7 @@ class QCustomAPI(LifecycleBind):
         self._state = True
 
     def onLoad(self, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         service = nodeSelf._baseService
         try:
             service.getManager().regAPI(self.apiPath, nodeSelf.funObj)
@@ -139,7 +148,7 @@ class QCustomAPI(LifecycleBind):
             traceback.print_exc()
         
     def onUnLoad(self, nodeSelf):
-        # type: (ContextNode) -> None
+        # type: (SERContextNode) -> None
         if self._state:
             service = nodeSelf._baseService
             service.getManager().removeAPI(
@@ -528,25 +537,35 @@ class AnnotationLoader:
         """ 加载注解业务 """
         dataCls_Set = set()     # type: set[type[LifecycleBind]]
         for fun, data in self._findAllAnnotationData():
-            data.onLoad(ContextNode(self, fun))
+            data.onLoad(self._createContextNode(fun))
             if not data.__class__ in dataCls_Set:
                 dataCls_Set.add(data.__class__)
         # 后置批处理
-        _contextNode = ContextNode(self, None)
+        _contextNode = self._createContextNode(None)
         for dataCls in dataCls_Set:
             dataCls.ON_ALL_LOAD(_contextNode)
+
+    def _createContextNode(self, funObj):
+        # type: (object) -> ContextNode
+        """ 创建上下文节点 """
+        return ContextNode(self, funObj)
 
     def _unLoadAnnotation(self):
         """ 停止注解业务 """
         dataCls_Set = set()     # type: set[type[LifecycleBind]]
         for fun, data in self._findAllAnnotationData():
-            data.onUnLoad(ContextNode(self, fun))
+            data.onUnLoad(self._createContextNode(fun))
             if not data.__class__ in dataCls_Set:
                 dataCls_Set.add(data.__class__)
         # 后置批处理
-        _contextNode = ContextNode(self, None)
+        _contextNode = self._createContextNode(None)
         for dataCls in dataCls_Set:
             dataCls.ON_ALL_OFF_LOAD(_contextNode)
+
+class SERAnnotationLoader(AnnotationLoader):
+    """ 特化：服务/业务类注解加载器 """
+    def _createContextNode(self, funObj):
+        return SERContextNode(self, funObj)
 
 class TimerLoader:
     """ 定时器加载器 """
@@ -612,7 +631,7 @@ class TimerLoader:
         for callTimerObj in callTimers:
             callTimerObj.call()
 
-class BaseBusiness(AnnotationLoader, TimerLoader):
+class BaseBusiness(SERAnnotationLoader, TimerLoader):
     """ 基本业务类 """
     @staticmethod
     def Listen(eventName):
@@ -694,7 +713,7 @@ class KeyBusiness(BaseBusiness):
     def _onCreateError(self):
         BaseBusiness._onCreateError(self)
         self._delKey()
-    
+
     def onStop(self):
         BaseBusiness.onStop(self)
         self._delKey()
@@ -716,7 +735,7 @@ class KeyBusiness(BaseBusiness):
         if self.useKey in dicData:
             del dicData[self.useKey]
 
-class _BaseService(IService, AnnotationLoader, TimerLoader):
+class _BaseService(IService, SERAnnotationLoader, TimerLoader):
     _BINDMANAGER = None     # type: _ServiceManager | None
     _CLOSE_STATE = False
     @staticmethod

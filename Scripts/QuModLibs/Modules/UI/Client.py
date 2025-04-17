@@ -2,6 +2,7 @@
 from ...Client import _getLoaderSystem, ListenForEvent, UnListenForEvent, Events
 from ..EventsPool.Client import POOL_ListenForEvent, POOL_UnListenForEvent
 from ...UI import EasyScreenNodeCls
+from ...Util import QRAIIDelayed, QBaseRAIIEnv
 import weakref
 lambda: "UI扩展功能 By Zero123"
 
@@ -68,18 +69,6 @@ class QGridData:
     def childsGen(self, uiNode):
         """ 创建子节点生成器 包含所有已渲染的子节点根级PATH """
         realPath = self.getRealPath(uiNode)
-        # 旧版实现已废弃 使用GetChildrenName接口避免子节点递归
-        # headPath = ""
-        # if self._pushUIMode:
-        #     headPath = self.path[:self.path.find("/", 1)]
-        # for gridPath in uiNode.GetAllChildrenPath(realPath):
-        #     # 通过切片拿到相对路径信息
-        #     if headPath:
-        #         # GetAllChildrenPath在PushUI下拿到的路径并不完整需要重新计算
-        #         gridPath = "{}/{}".format(headPath, gridPath)
-        #     absPath = gridPath[len(realPath):]  # type: str
-        #     if absPath.count("/") == 1:         # 判定为Grid根层级
-        #         yield (self.getPosWithPath(absPath) - 1, gridPath)
         for childName in uiNode.GetChildrenName(realPath):
             gridPath = "{}/{}".format(realPath, childName)
             yield (self.getPosWithPath(gridPath) - 1, gridPath)
@@ -255,28 +244,44 @@ class QUIControlFuntion(QUICanvas):
     """ QUI控件功能类(继承QUICanvas 但不再创建新控件而是管理已有控件) """
     def onCreate(self):
         self._conPath = self._parentPath
-    
+
     def removeControl(self):
         if self._conPath != None:
             self.onDestroyBefore()
             self._conPath = None
             self.onDestroy()
 
-class QGridBinder(QUIControlFuntion):
+class QRAIIControlFuntion(QUIControlFuntion, QRAIIDelayed):
+    """ 【推荐】基于RAII上下文资源管理的控件管理类 """
+    def __init__(self, uiNode, parentPath="", autoLoad=True):
+        QUIControlFuntion.__init__(self, uiNode, parentPath)
+        if autoLoad and isinstance(uiNode, QBaseRAIIEnv):
+            uiNode.addRAIIRes(self)
+
+    def _loadResource(self):
+        QRAIIDelayed._loadResource(self)
+        self.createControl()
+
+    def _cleanup(self):
+        QRAIIDelayed._cleanup(self)
+        self.removeControl()
+
+class QGridBinder(QRAIIControlFuntion):
     """ 网格绑定器 用于自动化管理界面中的网格/列表网格元素更新处理
         self.gridBinder = QGridBinder(self).setGridData(
             QGridData(...)
         )
 
+        若class并未继承DRAII上下文管理，则需要手动start/stop
         def Create(self):
             self.gridBinder.start()
         
         def Destroy(self):
             self.gridBinder.stop()
     """
-    def __init__(self, uiNode, parentPath=""):
-        QUIControlFuntion.__init__(self, uiNode, parentPath)
-        self._bindGridData = None
+    def __init__(self, uiNode, gridData=None, parentPath=""):
+        self._bindGridData = gridData
+        QRAIIControlFuntion.__init__(self, uiNode, parentPath, not gridData is None)
 
     def setGridData(self, gridData):
         # type: (QGridData) -> QGridBinder
@@ -341,11 +346,11 @@ class QGridBinder(QUIControlFuntion):
         return _wrapper
 
     def onCreate(self):
-        QUIControlFuntion.onCreate(self)
+        QRAIIControlFuntion.onCreate(self)
         self.listenQGridRender(self._bindGridData)
 
     def onDestroy(self):
-        QUIControlFuntion.onDestroy(self)
+        QRAIIControlFuntion.onDestroy(self)
         if self._bindGridData:
             self._bindGridData.clearIncrementalCache()
         self.unListenQGridRender(self._bindGridData)
@@ -366,14 +371,14 @@ class QUIAutoCanvas(QUICanvas):
 
     def onCreate(self):
         QUICanvas.onCreate(self)
-        POOL_ListenForEvent(Events.OnScriptTickClient, self._onTick)
+        POOL_ListenForEvent("OnScriptTickClient", self._onTick)
     
     def onDestroy(self):
         QUICanvas.onDestroy(self)
-        POOL_UnListenForEvent(Events.OnScriptTickClient, self._onTick)
+        POOL_UnListenForEvent("OnScriptTickClient", self._onTick)
 
 class QUIAutoControlFuntion(QUIControlFuntion):
-    """ QUI智能控件功能类 """
+    """ QUI智能控件功能类(适用于非支持RAII管理的界面) """
     def _getIsLive(self):
         return self.getParentLiveState()
 
@@ -388,8 +393,8 @@ class QUIAutoControlFuntion(QUIControlFuntion):
 
     def onCreate(self):
         QUIControlFuntion.onCreate(self)
-        POOL_ListenForEvent(Events.OnScriptTickClient, self._onTick)
+        POOL_ListenForEvent("OnScriptTickClient", self._onTick)
     
     def onDestroy(self):
         QUIControlFuntion.onDestroy(self)
-        POOL_UnListenForEvent(Events.OnScriptTickClient, self._onTick)
+        POOL_UnListenForEvent("OnScriptTickClient", self._onTick)
