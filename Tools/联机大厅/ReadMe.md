@@ -21,6 +21,10 @@ TARGET_CONFIG.json 用于声明目标参数
         "*/studio.json",
         "*/work.mcscfg"
     ]
+
+    // 不常用参数
+    // "ignoreLog": true,    // 默认true, 输出忽略文件日志。
+    // "outZipPath": "",    // 默认空，若设置具体路径（如D:/xxx/a.zip），将产生具体压缩文件，否则只在内存中处理。
 }
 ```
 
