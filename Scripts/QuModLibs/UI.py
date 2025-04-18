@@ -29,6 +29,7 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
     def __init__(self, namespace, name, param):
         _BASE_SCREEN_NODE_CLS.__init__(self, namespace, name, param)
         QDRAIIEnv.__init__(self)
+        self._raiiCleanState = False
 
     @staticmethod
     def _AUTO_REGISTER_UI_FINISH_EVENT(_={}):
@@ -135,7 +136,9 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
         # RAII资源管理析构
         if self._draiiEnvState:
             self.setDRAIIEnvState(False)
+            self._raiiCleanState = True
             self.freeALLRAIIRes()
+            self._raiiCleanState =False
 
 # ================================================
 # 因历史原因 以下功能将在未来逐步废弃 不推荐继续使用

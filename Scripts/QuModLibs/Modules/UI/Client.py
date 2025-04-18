@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from ...Client import _getLoaderSystem, ListenForEvent, UnListenForEvent, Events
 from ..EventsPool.Client import POOL_ListenForEvent, POOL_UnListenForEvent
-from ...UI import EasyScreenNodeCls
-from ...Util import QRAIIDelayed, QBaseRAIIEnv
+from ...UI import EasyScreenNodeCls, ScreenNodeWrapper
+from ...Util import QRAIIDelayed, QBaseRAIIEnv, QTemplate
 import weakref
 lambda: "UI扩展功能 By Zero123"
 
@@ -250,6 +250,32 @@ class QUIControlFuntion(QUICanvas):
             self.onDestroyBefore()
             self._conPath = None
             self.onDestroy()
+
+class QRAIICanvas(QUICanvas, QRAIIDelayed, QTemplate):
+    """ 【推荐】RAII画布类，自动上下文管理资源
+        class CustomCanvas(QRAIICanvas["jsonName.screenName"]):
+            pass
+    """
+    _BIND_JSON_DEF = ""
+    _TEMPLATE_ARGS = [ "_BIND_JSON_DEF" ]
+    def __init__(self, uiNode, parentPath="", initLoad=True):
+        QUICanvas.__init__(self, uiNode, parentPath)
+        self.drawDefName = self.drawDefName or self.__class__._BIND_JSON_DEF
+        if initLoad and isinstance(uiNode, QBaseRAIIEnv):
+            uiNode.addRAIIRes(self)
+
+    def _loadResource(self):
+        QRAIIDelayed._loadResource(self)
+        self.createControl()
+
+    def _cleanup(self):
+        QRAIIDelayed._cleanup(self)
+        uiNode = self.getUiNode()
+        if isinstance(uiNode, ScreenNodeWrapper) and uiNode._raiiCleanState:
+            # UI销毁期间的清理无需销毁控件（避免额外性能开销）
+            self.removeControl(True)
+        else:
+            self.removeControl(False)
 
 class QRAIIControlFuntion(QUIControlFuntion, QRAIIDelayed):
     """ 【推荐】基于RAII上下文资源管理的控件管理类 """
