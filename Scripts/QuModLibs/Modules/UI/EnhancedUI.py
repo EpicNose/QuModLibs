@@ -77,7 +77,7 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
     def Listen(eventName):
         """ [注解] 事件监听 """
         return UIEventListener.Binder.creatAnnotationObj(eventName)
-    
+
     @staticmethod
     def OnClick(buttonPath=""):
         """ [注解] 按钮点击 """

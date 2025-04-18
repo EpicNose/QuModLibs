@@ -51,8 +51,8 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
         return _autoRegister
 
     @classmethod
-    def createUI(cls, uiKey="", createParams=None, isHud=None):
-        """ 创建UI """
+    def createUI(cls, uiKey="", createParams=None, isHud=1):
+        """ 创建HUD_UI """
         if 1 > 2:
             return cls.getUiNode()
         if not isHud is None:
