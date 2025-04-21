@@ -137,6 +137,21 @@ class QSizeTransform(QLineTransform):
             tuple(self._startSize[i] + (self._toSize[i] - self._startSize[i]) * self.getRatio() for i in range(2)), self.resizeChildren
         )
 
+class QFullSizeTransform(QLineTransform):
+    """ QuFullSize大小变换，相较于QSizeTransform，该动画类修改大小会保留约束中心点 """
+    def __init__(self, startSize = (0, 0), toSize = (0, 0), useTime = 1.0):
+        QLineTransform.__init__(self, useTime=useTime)
+        self._startSize = startSize
+        self._toSize = toSize
+
+    def onUpdate(self):
+        QLineTransform.onUpdate(self)
+        uiNode = self.getUiNode()
+        conObj = uiNode.GetBaseUIControl(self.getParentPath())
+        x, y = tuple(self._startSize[i] + (self._toSize[i] - self._startSize[i]) * self.getRatio() for i in range(2))
+        conObj.SetFullSize("x", {"absoluteValue": x})
+        conObj.SetFullSize("y", {"absoluteValue": y})
+
 class QAlphaTransform(QTransform):
     """ Qu不透明度变换(仅支持图片/文字) """
     def onUpdate(self):
