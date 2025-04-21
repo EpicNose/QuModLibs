@@ -329,7 +329,7 @@ class _InventoryData:
         otherInventoryData._inventoryList[otherIndex] = myItem
     
     def simulatedOperation(self, _index, toInventoryData, toIndex):
-        # type: (int, _InventoryData, int) -> None
+        # type: (int, _InventoryData | None, int) -> tuple[_ItemData, _ItemData, int]
         """ 模拟操作背包物品 是moveItemTo与exchangeItemTo的整合
             @return - 将返回带有index操作后的 (原卡槽对象, Other卡槽对象, 状态码)
 
@@ -337,6 +337,7 @@ class _InventoryData:
                 0 移动叠加
                 1 交换物品
         """
+        toInventoryData = toInventoryData or self
         myItem = self.getItem(_index)
         beforeCount = myItem.count      # 移动之前数量
         self.moveItemTo(_index, toInventoryData, toIndex)
@@ -347,6 +348,11 @@ class _InventoryData:
             self.exchangeItemTo(_index, toInventoryData, toIndex)
             state = 1
         return (self.getItem(_index), toInventoryData.getItem(toIndex), state)
+
+    def simulatedOperation2(self, index, toInventoryData, toIndex):
+        # type: (int, _InventoryData, int) -> tuple[_ItemData, _ItemData, int]
+        """ 模拟背包操作，反转封装版本，适用于GUI逻辑。 """
+        return self.simulatedOperation(toIndex, toInventoryData, index)
 
     def moveSomeItemsTo(self, moveIndex, moveMaxCount, otherInventoryData, otherIndex = 0):
         # type: (int, int, _InventoryData, int) -> int
@@ -424,6 +430,10 @@ class _InventoryData:
         """ 初始化物品列表 当列表元素数目与总背包数目不足时将会补足为空 """
         for _ in range(len(self._inventoryList), self._size):
             self._inventoryList.append(self.createNullItem())
+    
+    def toDicList(self):
+        """ 返回物品列表 """
+        return [item.getDict() for item in self.walk()]
     
     def walk(self):
         """ 返回一个物品背包生成器以便遍历操作 """
