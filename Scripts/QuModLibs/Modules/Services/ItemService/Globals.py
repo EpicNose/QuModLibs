@@ -281,7 +281,7 @@ class _InventoryData:
         """ 背包信息列表 """
         self._userId = _userId
         """ 用户ID 通常指持有者实体 """
-    
+
     def __str__(self):
         return "<{}.{} {}>".format(self.__class__.__name__, id(self), [str(x) for x in self._inventoryList])
 
@@ -292,6 +292,9 @@ class _InventoryData:
             "s": self._size,
             "i": [x.getJSONData() for x in self.walk()]
         }
+
+    def getSize(self):
+        return self._size
     
     def moveItemTo(self, moveIndex, otherInventoryData, otherIndex = 0):
         # type: (int, _InventoryData, int) -> int
