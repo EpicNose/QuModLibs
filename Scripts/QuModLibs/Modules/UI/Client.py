@@ -39,7 +39,7 @@ class QGridData:
         return self
 
     def getRealPath(self, uiNode):
-        # type: (EasyScreenNodeCls) -> str
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> str
         """ 获取真实路径 """
         if self.isScrollGrid:
             # 对于网格列表则获取一下实时渲染路径
@@ -47,7 +47,7 @@ class QGridData:
         return self.path
 
     def getRealComponentPath(self, uiNode):
-        # type: (EasyScreenNodeCls) -> str
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> str
         componentPath = str(getattr(uiNode, "component_path"))
         return componentPath + self.getRealPath(uiNode)
     
@@ -78,7 +78,7 @@ class QGridData:
         self._lastRenderCacheSet.clear()
 
     def updateRender(self, uiNode):
-        # type: (EasyScreenNodeCls) -> None
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> None
         """ 刷新渲染 """
         self.bindUpdateBeforeFunc()
         lastRenderCache = self._lastRenderCacheSet
@@ -110,7 +110,7 @@ class QGridData:
 class QUICanvas:
     """ QUI画布绘制类 """
     def __init__(self, uiNode, parentPath = ""):
-        # type: (EasyScreenNodeCls, str) -> None
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
         self._conPath = None
         self._uiNodeRef = weakref.ref(uiNode)
         """ ui节点弱引用 """
@@ -147,7 +147,7 @@ class QUICanvas:
         return self._uiNodeRef()
 
     def rebuildUiNode(self, newUiNode):
-        # type: (EasyScreenNodeCls) -> None
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> None
         """ 重新绑定uiNode """
         if self._conPath != None:
             raise Exception("已构建控件的对象无法重新绑定UI节点")

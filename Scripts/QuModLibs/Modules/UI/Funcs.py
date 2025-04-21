@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from ...Client import clientApi, levelId
-from Client import QUIControlFuntion, QUIAutoControlFuntion, QGridData, EasyScreenNodeCls
+from Client import QUIControlFuntion, QUIAutoControlFuntion, QGridData, EasyScreenNodeCls, ScreenNodeWrapper
 from math import ceil
 lambda: "UI扩展功能 By Zero123"
 
 class QGridAdapter(QUIAutoControlFuntion):
     """ QUI 网格渲染适配器(实时) """
     def __init__(self, uiNode, parentPath, isScrollGrid=False, bindFunc = lambda *_: None, bindGridConName = "", bindUpdateBeforeFunc = lambda *_: None, bindUpdateFinishFunc = lambda *_: None):
-        # type: (EasyScreenNodeCls, str, bool, object, str, object, object) -> None
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper, str, bool, object, str, object, object) -> None
         """
             @uiNode - 绑定的UI节点
             @isScrollGrid - 按网格列表计算(即列表直接引用网格的控件关系)
@@ -52,8 +52,9 @@ class QGridAdapter(QUIAutoControlFuntion):
 
 class IQVirtualControl:
     def update(self, uiNode, path=""):
-        # type: (EasyScreenNodeCls, str) -> None
+        # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
         """ 更新处理 """
+        pass
 
 class QVirtualGridManager(QUIControlFuntion):
     """
@@ -73,7 +74,7 @@ class QVirtualGridManager(QUIControlFuntion):
             """ 置灰模式 """
 
         def update(self, uiNode, path=""):
-            # type: (EasyScreenNodeCls, str) -> None
+            # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
             if self.sprite != None:
                 uiNode.GetBaseUIControl(path).asImage().SetSprite(self.sprite)
             if self.clipDirection != None:
@@ -89,7 +90,7 @@ class QVirtualGridManager(QUIControlFuntion):
             """ 进度值 """
 
         def update(self, uiNode, path=""):
-            # type: (EasyScreenNodeCls, str) -> None
+            # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
             if self.value != None:
                 uiNode.GetBaseUIControl(path).asProgressBar().SetValue(self.value)
 
@@ -101,7 +102,7 @@ class QVirtualGridManager(QUIControlFuntion):
             self.syncSize = False
         
         def update(self, uiNode, path=""):
-            # type: (EasyScreenNodeCls, str) -> None
+            # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
             if self.text != None:
                 uiNode.GetBaseUIControl(path).asLabel().SetText(
                     self.text, self.syncSize
@@ -116,7 +117,7 @@ class QVirtualGridManager(QUIControlFuntion):
             self._bindClickFun = bindFun
 
         def update(self, uiNode, path=""):
-            # type: (EasyScreenNodeCls, str) -> None
+            # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
             if self._bindClickFun != None:
                 uiNode.QuSetButtonCallback(path, self._bindClickFun)
 
@@ -146,7 +147,7 @@ class QVirtualGridManager(QUIControlFuntion):
             return dataObj
         
         def update(self, uiNode, parentPath=""):
-            # type: (EasyScreenNodeCls, str) -> None
+            # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
             for data in (self.button, self.label, self.progressBar, self.image):
                 data.update(uiNode, parentPath)
             if self.visible != None:

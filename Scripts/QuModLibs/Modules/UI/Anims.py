@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls
+from Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls, ScreenNodeWrapper
 from ...Client import clientApi, ListenForEvent, UnListenForEvent, levelId
 from ..Utils.TimeLine import QTimeLine
 from copy import copy
@@ -57,7 +57,7 @@ class QTransform:
         return self
     
     def getUiNode(self):
-        # type: () -> EasyScreenNodeCls | None
+        # type: () -> EasyScreenNodeCls | ScreenNodeWrapper | None
         """ 获取UINode节点 """
         if self._uiNodeRef == None:
             return None
@@ -424,7 +424,7 @@ class QAnimManager(QUIAutoControlFuntion):
                 del self._conAnimDict[k]
                 continue
             v.update(dTime, forceUpdate)
-
+    
     def hasAnim(self):
         for v in self._conAnimDict.values():
             if v.hasAnim():
