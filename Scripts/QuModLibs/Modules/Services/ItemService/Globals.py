@@ -306,6 +306,11 @@ class _InventoryData:
             return myItem.count
         if otherItemData.empty:
             # 对方背包物品为空 完整移动
+            if otherItemData.nameIsNull():
+                # 对方为空物品栏 重新绘算
+                otherItemData = otherItemData.__class__(myItem.getDict(), myItem.userId)
+                otherItemData.setCount(0)
+                otherInventoryData._inventoryList[otherIndex] = otherItemData
             otherItemData.setCount(otherItemData.count + myItem.count)
             myItem.setCount(myItem.count - otherItemData.count)
             return myItem.count
@@ -321,12 +326,23 @@ class _InventoryData:
         return myItem.count
 
     def exchangeItemTo(self, myIndex, otherInventoryData, otherIndex = 0):
-        # type: (int, _InventoryData, int) -> int
-        """ 交换两个背包的物品无论类型是否相同 """
+        # type: (int, _InventoryData, int) -> None
+        """ 交换两个背包的物品，若类型不相同则维持类型重新构造。 """
         otherItemData = otherInventoryData.getItem(otherIndex)
         myItem = self.getItem(myIndex)
-        self._inventoryList[myIndex] = otherItemData
-        otherInventoryData._inventoryList[otherIndex] = myItem
+        # 维护class类型一致性
+        OtherItemCls = otherItemData.__class__
+        MyItemCls = myItem.__class__
+        # 同类型直接交换
+        if MyItemCls is OtherItemCls:
+            self._inventoryList[myIndex] = otherItemData
+            otherInventoryData._inventoryList[otherIndex] = myItem
+            return
+        # 不同类型重新构造
+        item1 = MyItemCls(otherItemData.getDict(), otherItemData.userId)
+        item2 = OtherItemCls(myItem.getDict(), myItem.userId)
+        self._inventoryList[myIndex] = item1
+        otherInventoryData._inventoryList[otherIndex] = item2
     
     def simulatedOperation(self, _index, toInventoryData, toIndex):
         # type: (int, _InventoryData | None, int) -> tuple[_ItemData, _ItemData, int]
