@@ -2,7 +2,6 @@
 from functools import wraps
 from threading import Thread,Lock
 from Information import Version
-from types import FunctionType
 from time import time
 import pickle as _pickle
 
