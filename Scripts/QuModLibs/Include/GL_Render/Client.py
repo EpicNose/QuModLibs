@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from ...Client import *
 from ...Util import TRY_EXEC_FUN, getObjectPathName
+from copy import deepcopy
 from ...Modules.Services.Client import (
     BaseService,
     BaseEvent,
@@ -14,9 +15,10 @@ from SharedRes import (
     GL_MOB_QUERY_KEY,
 )
 lambda: "By Zero123"
-lambda: "TIME: 2025/2/6"
+lambda: "TIME: 2025/4/26"
 
 class STATIC_IN:
+    USE_LOCAL_CACHE = False
     FULL_MOB_QUERY_FUNC = False
     MOB_QUERY_WHITE_LIST = set()
 
@@ -82,6 +84,20 @@ class PLAYER_RES_SERVICE(BaseService):
     GL_REST_ANIM_KEY = "Q_{}_GL.REST_ANIM".format(ModDirName)
     _LOCAL_EFFECT_LISTEN_MAP = {}   # type: dict[str, set[function]]    # 本地效果监听映射
     _REG_LOCAL_EFFECT_FUNCNAME = set()  # 存放使用装饰器注册过的函数路径 避免热重载带来的重复定义问题
+    _LOCAL_PLAYER_CACHE = {}        # type: dict[str, list]
+    _LOCAL_PLAYER_CACHE_STATIC = {}        # type: dict[str, list]
+
+    @staticmethod
+    def checkAndUpdatePlayerCache(playerId, newData=[], isStatic=False):
+        """ 检查并更新玩家历史缓存更新统计，若和缓存一致返回True 否则返回False """
+        target = PLAYER_RES_SERVICE._LOCAL_PLAYER_CACHE
+        if isStatic:
+            target = PLAYER_RES_SERVICE._LOCAL_PLAYER_CACHE_STATIC
+        oldData = target.get(playerId, {})
+        if oldData != newData:
+            target[playerId] = deepcopy(newData)
+            return False
+        return True
 
     @staticmethod
     def _REGISTER_QUERY():
@@ -298,18 +314,21 @@ class PLAYER_RES_SERVICE(BaseService):
         comp.SetSkin(value)
 
     def GL_RES_UPDATE(self, args, notRebuild=False):
+        # type: (dict, bool) -> int
         entityId = args["entityId"]
         newValue = args["newValue"]     # type: list
+        staticMode = args.get("staticMode", False)
         if len(newValue) == 0 or newValue == args["oldValue"]:
             return 0
         rc = 0  # 记录操作次数
-        for data in newValue:
-            _INSTRUCT_ID, _TYPE, _SHARED_DATA = str(data[0]), data[1], data[2]
-            if _INSTRUCT_ID in self._OPTMap:
-                rc += 1
-                TRY_EXEC_FUN(self._OPTMap[_INSTRUCT_ID], entityId, _TYPE, _SHARED_DATA)
-            else:
-                print("[PLAYER_RES_SERVICE] 找不到相关资源操作方法: {}".format(newValue))
+        if not STATIC_IN.USE_LOCAL_CACHE or not PLAYER_RES_SERVICE.checkAndUpdatePlayerCache(entityId, newValue, staticMode):
+            for data in newValue:
+                _INSTRUCT_ID, _TYPE, _SHARED_DATA = str(data[0]), data[1], data[2]
+                if _INSTRUCT_ID in self._OPTMap:
+                    rc += 1
+                    TRY_EXEC_FUN(self._OPTMap[_INSTRUCT_ID], entityId, _TYPE, _SHARED_DATA)
+                else:
+                    print("[PLAYER_RES_SERVICE] 找不到相关资源操作方法: {}".format(newValue))
         if rc <= 0 or notRebuild:
             return rc
         PLAYER_RES_SERVICE.rebuildPlayerRes(entityId)
@@ -420,7 +439,7 @@ class PLAYER_RES_SERVICE(BaseService):
         """ 加载静态资源 返回资源操作次数 """
         if len(self.staticPlayerResCMD) <= 0:
             return 0
-        return self.GL_RES_UPDATE({"entityId": playerId, "oldValue":[], "newValue": self.staticPlayerResCMD}, True)
+        return self.GL_RES_UPDATE({"entityId": playerId, "oldValue":[], "newValue": self.staticPlayerResCMD, "staticMode": True}, True)
 
     def setPlayerStaticGlobalRes(self, data=JSONRenderData(), SCRIPT_ANIMATE_AUTO_REPLACE=True):
         """ [客户端异步] 设置玩家静态全局资源 """
@@ -454,6 +473,13 @@ def ADD_MOB_QUERY_WHITE_LIST(*entityTypeArgs):
     """ 添加生物Query节点同步白名单 """
     for entityType in entityTypeArgs:
         STATIC_IN.MOB_QUERY_WHITE_LIST.add(entityType)
+
+@AllowCall
+def GL_GCPlayer(entityId):
+    if entityId in PLAYER_RES_SERVICE._LOCAL_PLAYER_CACHE:
+        del PLAYER_RES_SERVICE._LOCAL_PLAYER_CACHE[entityId]
+    if entityId in PLAYER_RES_SERVICE._LOCAL_PLAYER_CACHE_STATIC:
+        del PLAYER_RES_SERVICE._LOCAL_PLAYER_CACHE_STATIC[entityId]
 
 lambda: "GL_RENDER By Zero123"
 print("[Qu.GLRender] 客户端已加载")

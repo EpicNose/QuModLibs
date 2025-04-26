@@ -12,7 +12,10 @@ from SharedRes import (
 from copy import copy
 from time import time
 lambda: "GLR 全局资源处理系统 By Zero123 相比CTR它更侧重与玩家资源操作的本身"
-lambda: "TIME: 2025/1/03"
+lambda: "TIME: 2025/4/26"
+
+class STATIC_IN:
+    USE_PLAYER_LEVEL_GC = False
 
 class LineAnim:
     def __init__(self, fromValue, toValue, useTime = 1.0):
@@ -359,6 +362,8 @@ class GL_Service(BaseService):
             TRY_EXEC_FUN(obj.onRelease)
             obj.manager = None
             del self._entityResMap[entityId]
+            if STATIC_IN.USE_PLAYER_LEVEL_GC:
+                Call("*", "GL_GCPlayer", entityId)
     
     @BaseService.Listen(Events.AddServerPlayerEvent)
     def AddServerPlayerEvent(self, args):
