@@ -111,7 +111,7 @@ class BaseNBTView:
         typeId = 0
         if castType == BaseNBTView.AUTO_TYPE:
             # 自动转换类型
-            typeId = NBT_TYPE.AUTO_CAST[castType]
+            typeId = NBT_TYPE.AUTO_CAST[type(value)]
         return {"__type__": typeId, "__value__": value}
 
     def getKey(self, key, noneValue=None):
@@ -363,7 +363,7 @@ class EnchNBTView(BaseNBTView):
         # 替换原数据
         for i, data in enumerate(newNBTList):
             self.refData[i] = data
-
+    
     def clearAll(self):
         refData = self.refData
         while refData:
@@ -581,14 +581,25 @@ class _ItemData:
         from json import dumps
         newStr = dumps(joData, ensure_ascii=ensureAscii)
         self.setExtraId(newStr)
+    
+    def fetchOrInitNBTData(self, key, defaultValue=None):
+        # type: (str, dict | list | None) -> dict
+        """ 获取并初始化指定的NBT数据层 """
+        if not key in self.userData:
+            if defaultValue is None:
+                defaultValue = dict()
+            self.userData[key] = defaultValue
+            self.setUserData(self.userData)
+        return self.userData[key]
+
+    def createNBTDataView(self, key, defaultValue=None):
+        # type: (str, dict | list | None) -> BaseNBTView
+        """ 获取并初始化指定的NBT数据层视图 """
+        return BaseNBTView(self.fetchOrInitNBTData(key, defaultValue))
 
     def getEnchNBTView(self):
         """ 获取附魔NBT视图, 可通过视图直接操作数据。 """
-        target = "ench"
-        if not target in self.userData:
-            self.userData[target] = []
-            self.setUserData(self.userData)
-        return EnchNBTView(self.userData[target])
+        return EnchNBTView(self.fetchOrInitNBTData("ench", []))
 
     def getNBTView(self):
         """ 获取NBT视图，可通过视图直接操作数据。 """

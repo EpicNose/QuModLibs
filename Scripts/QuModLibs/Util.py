@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
-from threading import Thread,Lock
+from threading import Thread, Lock
 from Information import Version
 from time import time
 import pickle as _pickle
