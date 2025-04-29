@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 from ....Server import serverApi, levelId, _loaderSystem
 from ..Server import BaseService
-from Globals import _ItemBasicInfo, _ItemData, _InventoryData
+from Globals import (
+    _ItemBasicInfo,
+    _ItemData,
+    _InventoryData,
+    EnchNBTView,
+    EnchantType
+)
 lambda: "物品服务模块 By Zero123"
-lambda: "TIME: 2024/10/08"
 
 class ItemBasicInfo(_ItemBasicInfo):
     """ 基础物品信息 """

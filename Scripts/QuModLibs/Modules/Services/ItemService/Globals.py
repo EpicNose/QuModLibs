@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-lambda: "By Zero123 TIME: 2024/05/06"
+lambda: "By Zero123 通用物品协议规范"
 
 class _ItemBasicInfo:
     """ 基础物品信息 """
@@ -62,6 +62,308 @@ class _ItemBasicInfo:
         self.weaponDamage = self.args.get("weaponDamage", 0)
         self.armorDefense = self.args.get("armorDefense", 0)
 
+class NBT_TYPE:
+    """ NBT类型 """
+    INT = 1
+    SHORT = 2
+    LONG_LONG = 3
+    FLOAT = 4
+    DOUBLE = 5
+    STRING = 8
+
+    VIEW_MAPPING = {
+        INT: int,
+        SHORT: int,
+        LONG_LONG: int,
+        FLOAT: float,
+        DOUBLE: float,
+        STRING: str,
+    }
+
+    AUTO_CAST = {
+        int: INT,
+        float: FLOAT,
+        str: STRING,
+    }
+
+class BaseNBTView:
+    AUTO_TYPE = -1
+    NOT_NBT_TYPE = -2
+
+    """ NBT视图基类 """
+    def __init__(self, data=None):
+        # type: (dict | list | None) -> None
+        self.refData = data
+        if data is None:
+            self.refData = dict()
+
+    def getDataRef(self):
+        return self.refData
+
+    @staticmethod
+    def checkIsNbtType(value):
+        """ 检查是否为NBT类型 """
+        return isinstance(value, dict) and "__type__" in value and "__value__" in value
+
+    @staticmethod
+    def pyObjectToNBTData(value, castType=AUTO_TYPE):
+        """ 将Python对象转换为NBT数据 """
+        typeId = 0
+        if castType == BaseNBTView.AUTO_TYPE:
+            # 自动转换类型
+            typeId = NBT_TYPE.AUTO_CAST[castType]
+        return {"__type__": typeId, "__value__": value}
+
+    def getKey(self, key, noneValue=None):
+        # type: (str, object | None) -> object | None
+        """ 获取指定key的值 """
+        if key in self.refData:
+            value = self.refData[key]
+            if BaseNBTView.checkIsNbtType(value):
+                return value["__value__"]
+            return value
+        return noneValue
+
+    def getNBTValueType(self, key):
+        # type: (str) -> int
+        """ 获取指定key的NBT类型 """
+        if key in self.refData:
+            value = self.refData[key]
+            if BaseNBTView.checkIsNbtType(value):
+                return value["__type__"]
+        return BaseNBTView.AUTO_TYPE
+
+    def hasKey(self, key):
+        # type: (str) -> bool
+        """ 检查是否存在指定key """
+        return key in self.refData
+
+    def setKey(self, key, value, castType=AUTO_TYPE):
+        # type: (str, object, int) -> None
+        """ 设置指定key的值 """
+        if castType == BaseNBTView.NOT_NBT_TYPE:
+            # 非NBT数据层
+            self.refData[key] = value
+            return
+        self.refData[key] = BaseNBTView.pyObjectToNBTData(value, castType)
+
+    def append(self, nbtData):
+        if not isinstance(self.refData, list):
+            raise RuntimeError("当前数据不是列表类型")
+        self.refData.append(nbtData)
+
+    def getSize(self):
+        return len(self.refData)
+
+class EnchantType:
+    ArmorAll = 0
+    """ 保护 """
+    ArmorFire = 1
+    """ 火焰保护 """
+    ArmorFall = 2
+    """ 摔落保护 """
+    ArmorExplosive = 3
+    """ 爆炸保护 """
+    ArmorProjectile = 4
+    """ 弹射物保护 """
+    ArmorThorns = 5
+    """ 荆棘 """
+    WaterBreath = 6
+    """ 水下呼吸 """
+    WaterSpeed = 7
+    """ 深海探索者 """
+    WaterAffinity = 8
+    """ 水下速掘 """
+    WeaponDamage = 9
+    """ 锋利 """
+    WeaponUndead = 10
+    """ 亡灵杀手 """
+    WeaponArthropod = 11
+    """ 节肢杀手 """
+    WeaponKnockback = 12
+    """ 击退 """
+    WeaponFire = 13
+    """ 火焰附加 """
+    WeaponLoot = 14
+    """ 抢夺 """
+    MiningEfficiency = 15
+    """ 效率 """
+    MiningSilkTouch = 16
+    """ 精准采集 """
+    MiningDurability = 17
+    """ 耐久 """
+    MiningLoot = 18
+    """ 时运 """
+    BowDamage = 19
+    """ 力量 """
+    BowKnockback = 20
+    """ 冲击 """
+    BowFire = 21
+    """ 火矢 """
+    BowInfinity = 22
+    """ 无限 """
+    FishingLoot = 23
+    """ 海之眷顾 """
+    FishingLure = 24
+    """ 饵钓 """
+    FrostWalker = 25
+    """ 冰霜行者 """
+    Mending = 26
+    """ 经验修补 """
+    CurseBinding = 27
+    """ 绑定诅咒 """
+    CurseVanishing = 28
+    """ 消失诅咒 """
+    TridentImpaling = 29
+    """ 穿刺 """
+    TridentRiptide = 30
+    """ 激流 """
+    TridentLoyalty = 31
+    """ 忠诚 """
+    TridentChanneling = 32
+    """ 引雷 """
+    CrossbowMultishot = 33
+    """ 多重射击 """
+    CrossbowPiercing = 34
+    """ 穿透 """
+    CrossbowQuickCharge = 35
+    """ 快速装填 """
+    SoulSpeed = 36
+    """ 灵魂疾行 """
+    SwiftSneak = 37
+    """ 迅捷潜行 """
+    NumEnchantments = 38
+    """ 附魔种数 """
+    InvalidEnchantment = 39
+    """ 无效附魔 """
+    ModEnchant = 255
+    """ 自定义附魔 """
+
+class EnchNBTView(BaseNBTView):
+    """ 附魔NBT视图 """
+    class EnchStruct:
+        """ 附魔数据结构 """
+        def __init__(self, enchId=0, level=1, modEnchant=""):
+            self.enchId = enchId
+            self.level = level
+            self.modEnchant = modEnchant
+        
+        @staticmethod
+        def loadFromNBTDic(dic):
+            # type: (dict) -> EnchNBTView.EnchStruct
+            view = BaseNBTView(dic)
+            enchId = view.getKey("id", 0)
+            level = view.getKey("lvl", 0)
+            modEnchant = view.getKey("modEnchant", "")
+            return EnchNBTView.EnchStruct(enchId, level, modEnchant)
+
+        def toNBTView(self):
+            # type: () -> BaseNBTView
+            """ 转换为NBT视图对象 """
+            view = BaseNBTView()
+            view.setKey("id", self.enchId, NBT_TYPE.SHORT)
+            view.setKey("lvl", self.level, NBT_TYPE.SHORT)
+            view.setKey("modEnchant", self.modEnchant, NBT_TYPE.STRING)
+            return view
+
+        def toNBTDict(self):
+            # type: () -> dict
+            """ 转换为NBT字典 """
+            return self.toNBTView().getDataRef()
+
+        def __eq__(self, other):
+            if not isinstance(other, EnchNBTView.EnchStruct):
+                return False
+            return (
+                self.enchId == other.enchId and
+                self.level == other.level and
+                self.modEnchant == other.modEnchant
+            )
+
+        def __hash__(self):
+            return hash((self.enchId, self.level, self.modEnchant))
+        
+        def getSignedId(self):
+            """ 获取识别ID """
+            return self.modEnchant or self.enchId
+
+    def walk(self):
+        """ 附魔数据生成器 """
+        for nbtEnch in self.refData:
+            yield EnchNBTView.EnchStruct.loadFromNBTDic(nbtEnch)
+
+    def addEnchData(self, enchId=0, level=1, modEnchant=""):
+        """ 添加附魔数据(不会检查重复) """
+        return self.addEnchStruct(EnchNBTView.EnchStruct(enchId, level, modEnchant))
+
+    def addEnchStruct(self, data):
+        # type: (EnchNBTView.EnchStruct) -> None
+        """ 添加附魔数据结构(不会检查重复) """
+        self.append(data.toNBTDict())
+
+    def removeEnchantmentsByIds(self, enchIds=[]):
+        """ 批量移除指定附魔ID数据（若存在） """
+        removeDatas = set(enchIds)
+        def removeEnch(ench):
+            # type: (EnchNBTView.EnchStruct) -> EnchNBTView.EnchStruct | None
+            if ench.enchId in removeDatas:
+                return None
+            return ench
+        self.processEach(removeEnch)
+
+    def setEnchantments(self, enchViews=[]):
+        # type: (list[EnchNBTView.EnchStruct]) -> None
+        """ 批量新增/修改附魔数据（支持原版/自定义附魔，若附魔等级<=0则视为丢弃） """
+        setViewMaps = {}    # type: dict[str | int, EnchNBTView.EnchStruct]
+        for ench in enchViews:
+            setViewMaps[ench.getSignedId()] = ench
+        def setEnch(ench):
+            # type: (EnchNBTView.EnchStruct) -> EnchNBTView.EnchStruct | None
+            signed = ench.getSignedId()
+            if signed in setViewMaps:
+                # 修改数据
+                newData = setViewMaps[signed]
+                del setViewMaps[signed]
+                if newData.level <= 0:
+                    # 丢弃数据
+                    return None
+                return newData
+            return ench
+        self.processEach(setEnch)
+        # 添加新数据
+        for ench in setViewMaps.values():
+            if ench.level >= 0:
+                # 添加数据
+                self.addEnchStruct(ench)
+
+    def hasEnchantmentById(self, enchId=0):
+        """ 检查是否存在指定附魔ID数据。（若需批量操作建议使用processEach） """
+        for ench in self.walk():
+            if ench.enchId == enchId:
+                return True
+        return False
+
+    def processEach(self, func=lambda data: data):
+        """ 使用用户提供的函数处理每个附魔数据，并返回新的附魔数据列表（若返回None代表移除特定附魔）。 """
+        newNBTList = []
+        for ench in self.walk():
+            newData = func(ench)    # type: EnchNBTView.EnchStruct | None
+            if newData:
+                newNBTList.append(newData.toNBTDict())
+        # 重新分配内存
+        newSize = len(newNBTList)
+        oldSize = len(self.refData)
+        if newSize > oldSize:
+            # 扩容
+            self.refData.extend([None] * (newSize - oldSize))
+        elif newSize < oldSize:
+            # 收缩
+            for _ in range(oldSize - newSize):
+                self.refData.pop()
+        # 替换原数据
+        for i, data in enumerate(newNBTList):
+            self.refData[i] = data
+
 class _ItemData:
     NULL_ITEM = "minecraft:air"
     def __init__(self, dicArgs = {}, userId = None, index = -1):
@@ -116,7 +418,7 @@ class _ItemData:
         return self.getDict()
     
     @classmethod
-    def createItemData(cls, itemName = "", count = 1, aux = 0):
+    def createItemData(cls, itemName="", count=1, aux=0):
         """ 快速创建一个简易物品参数 """
         return cls(
             {
@@ -145,6 +447,11 @@ class _ItemData:
             otherItem.modEnchantData == self.modEnchantData
         )
     
+    def identical(self, otherItem):
+        # type: (_ItemData) -> bool
+        """ 完整比较与另外一个物品是否相同，包括数量 """
+        return self.equal(otherItem) and self.count == otherItem.count
+
     def getFormatItemName(self):
         """ 获取格式化后的物品名称 统一空物品值 """
         if not self.newItemName:
@@ -178,41 +485,41 @@ class _ItemData:
             self.enchantData = dicArgs.get("enchantData", [])
             self.modEnchantData = dicArgs.get("modEnchantData", [])
     
-    def setItemName(self, _itemName = None):
+    def setItemName(self, itemName=None):
         """ 设置物品标识符 """
-        if not _itemName or _itemName == _ItemData.NULL_ITEM:
+        if not itemName or itemName == _ItemData.NULL_ITEM:
             self.newItemName = _ItemData.NULL_ITEM
             self._dicArgs = None
             self.empty = True
             return
         if self._dicArgs == None:
             self._dicArgs = {}
-        self._dicArgs["newItemName"] = _itemName
-        self._dicArgs["itemName"] = _itemName
+        self._dicArgs["newItemName"] = itemName
+        self._dicArgs["itemName"] = itemName
         if not "newAuxValue" in self._dicArgs:
             self._dicArgs["newAuxValue"] = 0
             self.newAuxValue = 0
-        self.newItemName = _itemName
+        self.newItemName = itemName
         self.itemUpdate()
 
-    def setItemAux(self, _aux = 0):
+    def setItemAux(self, aux=0):
         """ 设置物品Aux 空物品无效 """
         if self.empty:
             return False
-        self.newAuxValue = _aux
-        self._dicArgs["newAuxValue"] = _aux
+        self.newAuxValue = aux
+        self._dicArgs["newAuxValue"] = aux
         return True
 
-    def nameIsNull(self, name = ""):
+    def nameIsNull(self, name=""):
         return not name or name == _ItemData.NULL_ITEM
     
-    def setCount(self, _count = 0):
+    def setCount(self, count=0):
         # type: (int) -> bool
         """ 设置物品数量 超过最大堆叠值将视为最大值 """
         if self.empty and self.nameIsNull(self.newItemName):
             return False
         maxCount = self.getItemBasicInfo().maxStackSize
-        _count = min(maxCount, _count)
+        _count = min(maxCount, count)
         self._dicArgs["count"] = _count
         self.count = _count
         if self.count <= 0:
@@ -221,37 +528,37 @@ class _ItemData:
             self.empty = False
         return True
     
-    def setDurability(self, _durability = 0):
+    def setDurability(self, durability=0):
         # type: (int) -> bool
         """ 设置物品耐久值 超过最大值将视为最大值 """
         if self.empty:
             return False
         maxValue = self.getItemBasicInfo().maxDurability
-        _durability = min(_durability, maxValue)
+        _durability = min(durability, maxValue)
         self._dicArgs["durability"] = _durability
         self.durability = _durability
         return True
     
-    def setCustomTips(self, newCustomTips = ""):
+    def setCustomTips(self, newCustomTips=""):
         """ 设置物品自定义Tips """
         if self.empty:
             return False
         self._dicArgs["customTips"] = newCustomTips
         self.customTips = newCustomTips
     
-    def setExtraId(self, _extraId = ""):
+    def setExtraId(self, extraId=""):
         """ 设置物品自定义标识符 """
         if self.empty:
             return False
-        self.extraId = _extraId
-        self._dicArgs["extraId"] = _extraId
+        self.extraId = extraId
+        self._dicArgs["extraId"] = extraId
     
-    def setUserData(self, _userData = {}):
+    def setUserData(self, userData={}):
         """ 设置用户参数 根据文档说明该参数存放附魔 颜色等相关原版数据 请勿随意操作 """
         if self.empty:
             return False
-        self.userData = _userData
-        self._dicArgs["userData"] = _userData
+        self.userData = userData
+        self._dicArgs["userData"] = userData
     
     def getJSONExtraId(self):
         # type: () -> dict
@@ -263,12 +570,26 @@ class _ItemData:
             pass
         return {}
 
-    def setJSONExtraId(self, joData = {}, ensureAscii = True):
+    def setJSONExtraId(self, joData={}, ensureAscii=True):
         # type: (dict, bool) -> None
         """ 设置JSONExtraId """
         from json import dumps
         newStr = dumps(joData, ensure_ascii=ensureAscii)
         self.setExtraId(newStr)
+
+    def getEnchNBTView(self):
+        """ 获取附魔NBT视图, 可通过视图直接操作数据。 """
+        target = "ench"
+        if not target in self.userData:
+            self.userData[target] = []
+            self.setUserData(self.userData)
+        return EnchNBTView(self.userData[target])
+
+    def getNBTView(self):
+        """ 获取NBT视图，可通过视图直接操作数据。 """
+        if not self._dicArgs.get("userData", None) is self.userData:
+            self.setUserData(dict())
+        return BaseNBTView(self.userData)
 
 class _InventoryData:
     """ 背包物品信息 """
