@@ -332,7 +332,7 @@ class EnchNBTView(BaseNBTView):
         self.processEach(setEnch)
         # 添加新数据
         for ench in setViewMaps.values():
-            if ench.level >= 0:
+            if ench.level > 0:
                 # 添加数据
                 self.addEnchStruct(ench)
 
