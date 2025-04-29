@@ -364,6 +364,11 @@ class EnchNBTView(BaseNBTView):
         for i, data in enumerate(newNBTList):
             self.refData[i] = data
 
+    def clearAll(self):
+        refData = self.refData
+        while refData:
+            refData.pop()
+
 class _ItemData:
     NULL_ITEM = "minecraft:air"
     def __init__(self, dicArgs = {}, userId = None, index = -1):
