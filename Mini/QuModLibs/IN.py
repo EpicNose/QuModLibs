@@ -14,6 +14,8 @@ class RuntimeService:
     # LOADER SYSTEM
     _serverLoadBefore = []      # type: list[function]
     _clientLoadBefore = []      # type: list[function]
+    _serverLoadFinish = []      # type: list[function]
+    _clientLoadFinish = []      # type: list[function]
     # THREAD ID
     _serverThreadID = None
     _clientThreadID = None

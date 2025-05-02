@@ -96,6 +96,13 @@ def AllowCall(func):
     _loaderSystem.regCustomApi(key3, func)
     return func
 
+def InjectHttpPlayerId(func):
+    """ [装饰器] 注入玩家ID接收，可搭配@AllowCall使用（注意先后顺序） """
+    def _wrapper(*args, **kwargs):
+        return func(_loaderSystem.httpPlayerId, *args, **kwargs)
+    _wrapper.__name__ = func.__name__
+    return _wrapper
+
 def LocalCall(funcName="", *args, **kwargs):
     """ 本地调用 执行当前端@AllowCall|@CallBackKey("...")的方法 """
     return _loaderSystem.localCall(funcName, *args, **kwargs)

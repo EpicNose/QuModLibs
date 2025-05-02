@@ -65,6 +65,7 @@ class LoaderSystem(ServerSystem, EasyListener):
         RuntimeService._serverStarting = True
         self.namespace = namespace
         self.systemName = systemName
+        self.httpPlayerId = None
         self._systemList = RuntimeService._serverSystemList
         self._initState = False
         self._regInitState = False
@@ -74,7 +75,14 @@ class LoaderSystem(ServerSystem, EasyListener):
         """ 后置销毁触发 通常是内部使用确保在用户业务之后执行 """
         self._initSystemListen()
         self.systemInit()
-    
+
+    def _systemCallListenerHook(self, args={}):
+        target = "__id__"
+        if target in args:
+            self.httpPlayerId = args[target]
+            return
+        self.httpPlayerId = None
+
     def _initSystemListen(self):
         self.ListenForEvent(NAMESPACE, SYSTEMNAME, CLIENT_CALL_EVENT, self, self._systemCallListener)
     

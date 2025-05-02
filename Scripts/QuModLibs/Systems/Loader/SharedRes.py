@@ -46,7 +46,11 @@ class EasyListener:
         api = args["api"]
         ag = EasyListener._unPackRefArgs(args["args"])
         kwargs = EasyListener._unPackRefDictArgs(args["kw"])
+        self._systemCallListenerHook(args)
         return self.localCall(api, *ag, **kwargs)
+    
+    def _systemCallListenerHook(self, _={}):
+        pass
 
     @staticmethod
     def _unPackRefArgs(data):

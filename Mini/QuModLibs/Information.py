@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-Version = "1.3.5-Mini"
+Version = "1.3.9-Mini"
 ApiVersion = 4
 Author = "Zero123"
 ContactInformation = "QQ:913702423"
