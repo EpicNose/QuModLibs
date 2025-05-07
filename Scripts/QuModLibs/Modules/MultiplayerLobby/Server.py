@@ -38,7 +38,7 @@ class OrderINFO:
         """ 自动设置订单发货 """
         BaseLobbyManager.LOBBY_SET_STORAGE_AND_USER_ITEM(self.uid, callback, self.orderId, None)
 
-class LobbyPlayerComp(QBaseEntityComp, QTemplate):
+class LobbyPlayerComp(QBaseEntityComp):
     """ 联机大厅玩家数据管理组件
         - 高性能管理逻辑:
             在 onFirstDataUpdate 事件下读取数据并写入内存 后续直接在内存上操作并使用惰性写入(lazyWriteData)同步后台
@@ -47,13 +47,13 @@ class LobbyPlayerComp(QBaseEntityComp, QTemplate):
         - 及时同步:
             通过 asyncUpdateStorage 方法获取最新数据并在回调下安全处理 适用于严格场景数据计算
     """
-    _BIND_TARGET_KEYS = []
-    _TEMPLATE_ARGS = [ "_BIND_TARGET_KEYS" ]
+    # _BIND_TARGET_KEYS = []
+    # _TEMPLATE_ARGS = [ "_BIND_TARGET_KEYS" ]
 
-    @classmethod
-    def __createTemplateCls__(cls, argDatas):
-        # 重新实现模板生成方法 支持增量参数
-        return QTemplate.__createTemplateCls__(cls, [argDatas])
+    # @classmethod
+    # def __createTemplateCls__(cls, argDatas):
+    #     # 重新实现模板生成方法 支持增量参数
+    #     return QTemplate.__createTemplateCls__(cls, [argDatas])
 
     def __init__(self):
         QBaseEntityComp.__init__(self)
@@ -76,8 +76,8 @@ class LobbyPlayerComp(QBaseEntityComp, QTemplate):
         """ 待写入数据表 """
         self._waitWriteCallBackData = dict()
         """ 待写入数据回调表 """
-        if self.__class__._BIND_TARGET_KEYS:
-            self.userTargetKeyDatas += self.__class__._BIND_TARGET_KEYS
+        # if self.__class__._BIND_TARGET_KEYS:
+        #     self.userTargetKeyDatas += self.__class__._BIND_TARGET_KEYS
         self._userDataInitFinish = False
         self._automatedOrderProcHook = lambda *_: None
 
