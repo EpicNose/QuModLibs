@@ -260,10 +260,7 @@ def printStack(printNow=True):
 def getObjectPathName(_callObj = lambda: None):
     # type: (object) -> str
     """ 获取可执行对象的目录名 """
-    funcModule = _callObj.__module__
-    funcName = _callObj.__name__
-    keyName = "{}.{}".format(funcModule, funcName)
-    return keyName
+    return ".".join((_callObj.__module__, _callObj.__name__))
 
 def QThrottle(intervalTime=0.1):
     """ 该装饰器用于限制函数重复执行的最小时间间隔 """
