@@ -212,7 +212,12 @@ class QBox3D:
         self.rotationAngle = rotationAngle
         # 旋转之前的盒子角点
         self.corners = self.getLocalCorners()
-    
+
+    def posMove(self, moveVc):
+        # type: (Vec3) -> QBox3D
+        self.center.addVec(moveVc)
+        return self
+
     def getScaleXYZ(self):
         # type: () -> Vec3
         """ 获取XYZ大小 """

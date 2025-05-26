@@ -14,8 +14,6 @@ class _TempData:
     _threadAnalysis = False
 
 class Include:
-    ctRender_v2 = False
-    """ CTRender v2 资源管理系统 """
     attackExtend = False
     """ AC战斗机制 链攻击系统(商务纠纷暂已屏蔽) """
     glRender = False
@@ -57,8 +55,6 @@ class QMain(object):
     def _loadServerInclude(self):
         """ 加载服务端Include扩展项 """
         quModLibsPath = IN.QuModLibsPath
-        if Include.ctRender_v2:
-            REG_SERVER_MODULE(quModLibsPath + ".Include.CT_Render.ServerApi")
         if Include.attackExtend:
             REG_SERVER_MODULE(quModLibsPath + ".Include.AttackExtend.Server")
         if Include.glRender:
@@ -67,8 +63,6 @@ class QMain(object):
     def _loadClientInclude(self):
         """ 加载客户端Include扩展项 """
         quModLibsPath = IN.QuModLibsPath
-        if Include.ctRender_v2:
-            REG_CLIENT_MODULE(quModLibsPath + ".Include.CT_Render.ClientApi")
         if Include.attackExtend:
             REG_CLIENT_MODULE(quModLibsPath + ".Include.AttackExtend.Client")
         if Include.glRender:
