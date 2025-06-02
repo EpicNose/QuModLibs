@@ -84,7 +84,7 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
         return UIButtonClickBinder.creatAnnotationObj(buttonPath)
 
     def Update(self):
-        ScreenNodeWrapper.Update(self)
+        # ScreenNodeWrapper.Update(self)
         self._timerUpdate()
 
     def Create(self):
