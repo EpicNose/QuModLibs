@@ -94,3 +94,57 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
     def Destroy(self):
         ScreenNodeWrapper.Destroy(self)
         self._unLoadAnnotation()
+
+def UI_INIT_ERASURE(timelyMode=True):
+    """ 用于对UI_ARGS进行擦除 隐式处理参数 """
+    def _FORWARD(cls):
+        if not issubclass(cls, ScreenNodeWrapper):
+            raise TypeError("非法的UI类")
+        class WraperForward(cls):
+            _WDY_ARGS = tuple()
+            _WDY_KWARGS = {}
+            def __init__(self, namespace, name, param):
+                for baseCls in cls.__bases__:
+                    baseCls.__init__(self, namespace, name, param)
+                if timelyMode:
+                    self._callForwardInit()
+
+            def _callForwardInit(self):
+                args = WraperForward._WDY_ARGS
+                kwargs = WraperForward._WDY_KWARGS
+                WraperForward._WDY_ARGS = tuple()
+                WraperForward._WDY_KWARGS = {}
+                cls.__init__(self, *args, **kwargs)
+
+            def Create(self):
+                if not timelyMode:
+                    self._callForwardInit()
+                cls.Create(self)
+
+        WraperForward.__name__ = cls.__name__
+        if 1 > 2:
+            return cls
+        return WraperForward
+    return _FORWARD
+
+def CREATE_UI_BIND_FORWARDER(uiCls, pushUI=False):
+    """
+    创建 UI 绑定转发器
+
+    示例:
+        class UIXXX(...):
+            ...
+
+        uiForward = CREATE_UI_BIND_FORWARD(UIXXX)
+        uiForward(*args)  # 通过函数调用方式创建 UI
+    """
+    if not issubclass(uiCls, ScreenNodeWrapper):
+        raise TypeError("非法的UI类")
+    def _FORWARD(*args, **kwargs):
+        setattr(uiCls, "_WDY_ARGS", args)
+        setattr(uiCls, "_WDY_KWARGS", kwargs)
+        if not pushUI:
+            return uiCls.createUI()
+        else:
+            return uiCls.pushScreen()
+    return _FORWARD
