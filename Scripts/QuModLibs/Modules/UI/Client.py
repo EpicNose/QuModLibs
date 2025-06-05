@@ -186,10 +186,10 @@ class QUICanvas:
     def clearParent(self):
         """ 清理parent目录所有控件 """
         uiNode = self.getUiNode()
-        for realPath in uiNode.GetAllChildrenPath(self._parentPath):
-            absPath = realPath[len(self._parentPath):]  # 通过切片拿到相对路径信息
-            if absPath.count("/") == 1:                 # 判定为根层级
-                uiNode.RemoveComponent(realPath, self._parentPath)
+        realPath = self._parentPath
+        for childName in uiNode.GetChildrenName(realPath):
+            childPath = "{}/{}".format(realPath, childName)
+            uiNode.RemoveComponent(childPath, self._parentPath)
 
     def listenQGridRender(self, _QGridData):
         # type: (QGridData) -> None
