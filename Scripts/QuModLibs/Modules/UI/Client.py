@@ -121,6 +121,10 @@ class QUICanvas:
         self._T_FORCEUPDATE = True
         self._T_JUST_ON_DESTROY = False
 
+    @property
+    def uiNode(self):
+        return self.getUiNode()
+
     def getNodeLiveState(self):
         # type: () -> bool
         """ 获取节点存活状态 """
