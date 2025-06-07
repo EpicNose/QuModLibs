@@ -9,6 +9,7 @@ from ..Services.Globals import (
 )
 from ...Client import ListenForEvent, UnListenForEvent
 from ...Util import QRAIIDelayed, QBaseRAIIEnv
+from Client import QUICanvas, QUIControlFuntion
 lambda: "增强版UI模块, 提供更为高阶的UI管理逻辑"
 
 class UIEventListener(QRAIIDelayed):
@@ -84,7 +85,7 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
         return UIButtonClickBinder.creatAnnotationObj(buttonPath)
 
     def Update(self):
-        ScreenNodeWrapper.Update(self)
+        # ScreenNodeWrapper.Update(self)
         self._timerUpdate()
 
     def Create(self):
@@ -94,6 +95,74 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
     def Destroy(self):
         ScreenNodeWrapper.Destroy(self)
         self._unLoadAnnotation()
+
+class IBaseQECanvas(AnnotationLoader, QRAIIDelayed):
+    @staticmethod
+    def Listen(eventName):
+        """ [注解] 事件监听 """
+        return UIEventListener.Binder.creatAnnotationObj(eventName)
+
+class QECanvas(QUICanvas, IBaseQECanvas):
+    """ 增强版画布类 基于RAII机制 """
+    def __init__(self, uiNode, parentPath = ""):
+        QUICanvas.__init__(self, uiNode, parentPath)
+
+    def onCreate(self):
+        QUICanvas.onCreate(self)
+        self._loadAnnotation()
+
+    def onDestroyBefore(self):
+        QUICanvas.onDestroyBefore(self)
+        self._unLoadAnnotation()
+
+    def autoLoad(self):
+        self.getUiNode().addRAIIRes(self)
+        return self
+
+    def autoRemove(self):
+        return self.getUiNode().freeRAIIRes(self)
+
+    def _loadResource(self):
+        QRAIIDelayed._loadResource(self)
+        self.createControl()
+
+    def _cleanup(self):
+        QRAIIDelayed._cleanup(self)
+        if self.getUiNode()._raiiCleanState:
+            self.removeControl(True)
+        else:
+            self.removeControl(False)
+
+class QEControlFuntion(QUIControlFuntion, IBaseQECanvas):
+    """ 增强版UI控制功能类 基于RAII机制 """
+    def __init__(self, uiNode, parentPath = ""):
+        QUIControlFuntion.__init__(self, uiNode, parentPath)
+
+    def onCreate(self):
+        QUIControlFuntion.onCreate(self)
+        self._loadAnnotation()
+
+    def onDestroyBefore(self):
+        QUIControlFuntion.onDestroyBefore(self)
+        self._unLoadAnnotation()
+
+    def autoLoad(self):
+        self.getUiNode().addRAIIRes(self)
+        return self
+
+    def autoRemove(self):
+        return self.getUiNode().freeRAIIRes(self)
+
+    def _loadResource(self):
+        QRAIIDelayed._loadResource(self)
+        self.createControl()
+
+    def _cleanup(self):
+        QRAIIDelayed._cleanup(self)
+        if self.getUiNode()._raiiCleanState:
+            self.removeControl(True)
+        else:
+            self.removeControl(False)
 
 def UI_INIT_ERASURE(timelyMode=True):
     """ 用于对UI_ARGS进行擦除 隐式处理参数 """
