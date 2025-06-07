@@ -96,11 +96,32 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
         ScreenNodeWrapper.Destroy(self)
         self._unLoadAnnotation()
 
+class CanvasButtonClickBinder(LifecycleBind):
+    """ Canvas类按钮点击绑定器 """
+    def __init__(self, buttonPath="", pathGenEval=None):
+        LifecycleBind.__init__(self)
+        self.pathGenEval = pathGenEval
+        self.buttonPath = buttonPath
+
+    def onLoad(self, nodeSelf):
+        # type: (ContextNode) -> None
+        contextNode = nodeSelf.contextNode
+        if isinstance(contextNode, QUICanvas):
+            contextNode.getUiNode().setButtonClickHandler(
+                contextNode._conPath + self.buttonPath,
+                nodeSelf.funObj
+            )
+
 class IBaseQECanvas(AnnotationLoader, QRAIIDelayed):
     @staticmethod
     def Listen(eventName):
         """ [注解] 事件监听 """
         return UIEventListener.Binder.creatAnnotationObj(eventName)
+    
+    @staticmethod
+    def OnClick(buttonPath=""):
+        """ [注解] 按钮点击绑定 """
+        return CanvasButtonClickBinder.creatAnnotationObj(buttonPath)
 
 class QECanvas(QUICanvas, IBaseQECanvas):
     """ 增强版画布类 基于RAII机制 """
