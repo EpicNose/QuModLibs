@@ -98,9 +98,8 @@ class QEScreenNode(ScreenNodeWrapper, TimerLoader, AnnotationLoader):
 
 class CanvasButtonClickBinder(LifecycleBind):
     """ Canvas类按钮点击绑定器 """
-    def __init__(self, buttonPath="", pathGenEval=None):
+    def __init__(self, buttonPath=""):
         LifecycleBind.__init__(self)
-        self.pathGenEval = pathGenEval
         self.buttonPath = buttonPath
 
     def onLoad(self, nodeSelf):
