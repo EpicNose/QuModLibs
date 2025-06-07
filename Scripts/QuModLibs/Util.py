@@ -86,7 +86,7 @@ class QBaseRAIIEnv:
     def freeRAIIRes(self, res):
         # type: (QRAIIBase) -> bool
         """ 释放RAII资源 """
-        if res not in self._raiiResSet:
+        if not res in self._raiiResSet:
             return False
         self._raiiResSet.remove(res)
         res._cleanup()
