@@ -221,6 +221,7 @@ class QUICanvas:
         self._T_JUST_ON_DESTROY = justOnDestroy
         if justOnDestroy:
             if self._conPath != None:
+                self.onDestroyBefore()
                 self._conPath = None
                 self.onDestroy()
                 return True
