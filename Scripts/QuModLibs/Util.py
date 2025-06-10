@@ -71,6 +71,14 @@ class QRAIIDelayed(QRAIIBase):
     def _loadResource(self):
         pass
 
+class QRAIIDelayedFunc(QRAIIDelayed):
+    """ 延迟加载函数资源 """
+    def __init__(self, bindFunc=lambda: None):
+        self.bindFunc = bindFunc
+
+    def _loadResource(self):
+        self.bindFunc()
+
 class QBaseRAIIEnv:
     def __init__(self):
         self._raiiResSet = set()    # type: set[QRAIIBase]
