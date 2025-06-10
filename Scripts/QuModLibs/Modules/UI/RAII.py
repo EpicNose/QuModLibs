@@ -65,6 +65,8 @@ class TouchPaperDoll(QEControlFuntion):
             return
         x = mPos[0]
         moveX = x - self.bindPcMosStartPos[0]
+        if moveX <= 0.05:
+            return
         self.setRotY(self.getRotY() + moveX * 1.3)
         self.bindPcMosStartPos = mPos
         self.updateRender()
