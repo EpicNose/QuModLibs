@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 from ...Client import *
 from ...Util import QRAIIDelayed
-from EnhancedUI import QEControlFuntion, ScreenNodeWrapper
+from EnhancedUI import (
+    QEControlFuntion,
+    ScreenNodeWrapper,
+    LifecycleBind,
+    ContextNode,
+)
 import weakref
 
 class TouchPaperDoll(QEControlFuntion):
     """ 触摸纸娃娃功能封装类
-        @touchButton: 触摸按钮路径, 默认为父节点下的touchHandler
+        @uiNode: UI节点, 必须是ScreenNodeWrapper实例
+        @parentPath: 纸娃娃所在路径
         @defaultParams: 纸娃娃默认参数, 包含初始旋转角度等(同原版接口参数)
+        @touchButton: 触摸按钮路径, 默认为父节点下的touchHandler
     """
     def __init__(self, uiNode, parentPath="", defaultParams={}, touchButton=""):
         QEControlFuntion.__init__(self, uiNode, parentPath)
@@ -88,6 +95,11 @@ class TouchPaperDoll(QEControlFuntion):
 
 class RAIIWindowESC(QRAIIDelayed):
     """ RAII窗口ESC退出绑定(适用于PUSH界面) """
+    class _Binder(LifecycleBind):
+        def onLoad(self, nodeSelf):
+            # type: (ContextNode) -> None
+            RAIIWindowESC(nodeSelf.contextNode, bindCloseFunc=nodeSelf.funObj)
+
     def __init__(self, uiNode, bindCloseFunc=None):
         self.bindCloseFunc = bindCloseFunc
         if not isinstance(uiNode, ScreenNodeWrapper):
@@ -95,8 +107,12 @@ class RAIIWindowESC(QRAIIDelayed):
         self.uiNodeRef = weakref.ref(uiNode)
         uiNode.addRAIIRes(self)
 
+    @staticmethod
+    def Bind():
+        """ [注解] ESC按键绑定 """
+        return RAIIWindowESC._Binder.creatAnnotationObj()
+
     def _loadResource(self):
-        """ 加载资源 """
         ListenForEvent("OnKeyPressInGame", self, self.OnKeyPressInGame)
 
     def _cleanup(self):

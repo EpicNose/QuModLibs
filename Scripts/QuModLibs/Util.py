@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
-from threading import Thread, Lock
+from threading import Thread
 from Information import Version
 from time import time
 import pickle as _pickle
@@ -39,7 +39,7 @@ class SystemSide(object):
 ModDirName = SystemSide.__module__.split(".")[0]
 buil = UniversalObject()
 Unknown = type("Unknown",(object,),{})
-ThreadLock = Lock()
+# ThreadLock = Lock()
 
 class _QTemplateMetaCls(type):
     """ 模板元类 """
@@ -174,12 +174,17 @@ def ExceptionHandling(errorFun=lambda: None, output=False):
         return newFun
     return exceptionHandling
 
-def IsThread(Fun):
+def IsThread(func):
     """ [装饰器] 是多线程的 @IsThread 使得该函数在独立新线程工作 """
-    @wraps(Fun)
-    def newFun(*Args,**Kwargs):
-        Xc = Thread(target=Fun,args=tuple(Args),kwargs=dict(Kwargs)); Xc.start()
-        return Xc
+    @wraps(func)
+    def newFun(*args, **kwargs):
+        xc = Thread(
+            target=func,
+            args=tuple(args),
+            kwargs=dict(kwargs)
+        )
+        xc.start()
+        return xc
     return newFun
 
 def InitOperation(fun):

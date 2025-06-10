@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
-from threading import Thread,Lock
+from threading import Thread
 from Information import Version
 from time import time
 import pickle as _pickle
@@ -39,43 +39,7 @@ class SystemSide(object):
 ModDirName = SystemSide.__module__.split(".")[0]
 buil = UniversalObject()
 Unknown = type("Unknown",(object,),{})
-ThreadLock = Lock()
-
-def ParameterType(*Args, **Kwargs):       # 运行时类型检测有损性能
-    """ 函数类型校验装饰器 可以使用列表/元组代表多个类型 """
-    def __ParameterType(Func):
-        ArgsType = Args+tuple(Kwargs.values())
-        KwargsType = Kwargs
-        @wraps(Func)
-        def newFun(*__Args, **__Kwargs):
-            # Args参数类型校验
-            for i, data in enumerate(__Args):
-                if i>=len(ArgsType): continue       # 类型限制外 通过
-                typ = ArgsType[i]
-                TypeList = [typ] if not isinstance(typ, list) and not isinstance(typ, tuple) else typ
-                if any((isinstance(data, Type) for Type in TypeList)):
-                    continue                        # 符合其中的任意类型 通过
-                Error = "类型异常({name}) {data} 不是 {args}".format(name=Func.__name__, data=data,
-                    args=TypeList[0] if len(TypeList) == 1 else " | ".join((str(x) for x in TypeList))
-                )
-                raise TypeError(Error)
-            # Kwargs参数类型校验
-            for Key, Data in __Kwargs.items():
-                if not Key in KwargsType: continue
-                typ = KwargsType[Key]
-                TypeList = [typ] if not isinstance(typ, list) and not isinstance(typ, tuple) else typ
-                if any((isinstance(Data, Type) for Type in TypeList)):
-                    continue                        # 符合其中的任意类型 通过
-                Error = "类型异常({name}) {Key} = {data} 不是 {args}".format(
-                    Key = Key,
-                    name=Func.__name__, 
-                    data=Data,
-                    args=TypeList[0] if len(TypeList) == 1 else " | ".join((str(x) for x in TypeList))
-                )
-                raise TypeError(Error)
-            return Func(*__Args, **__Kwargs)
-        return newFun
-    return __ParameterType
+# ThreadLock = Lock()
 
 def RandomUid():
     """ 创建随机UID """
@@ -108,12 +72,17 @@ def ExceptionHandling(errorFun=lambda: None, output=False):
         return newFun
     return exceptionHandling
 
-def IsThread(Fun):
+def IsThread(func):
     """ [装饰器] 是多线程的 @IsThread 使得该函数在独立新线程工作 """
-    @wraps(Fun)
-    def newFun(*Args,**Kwargs):
-        Xc = Thread(target=Fun,args=tuple(Args),kwargs=dict(Kwargs)); Xc.start()
-        return Xc
+    @wraps(func)
+    def newFun(*args, **kwargs):
+        xc = Thread(
+            target=func,
+            args=tuple(args),
+            kwargs=dict(kwargs)
+        )
+        xc.start()
+        return xc
     return newFun
 
 def InitOperation(fun):
