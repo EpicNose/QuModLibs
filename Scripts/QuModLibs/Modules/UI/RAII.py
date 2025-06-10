@@ -94,7 +94,7 @@ class RAIIWindowESC(QRAIIDelayed):
             raise TypeError("uiNode must be a ScreenNodeWrapper instance")
         self.uiNodeRef = weakref.ref(uiNode)
         uiNode.addRAIIRes(self)
-    
+
     def _loadResource(self):
         """ 加载资源 """
         ListenForEvent("OnKeyPressInGame", self, self.OnKeyPressInGame)
