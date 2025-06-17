@@ -16,7 +16,9 @@ from functools import wraps
 lambda: "By Zero123"
 
 __all__ = [
-    "ScreenNodeWrapper", "EasyScreenNodeCls", "ESNC"
+    "ScreenNodeWrapper",
+    "EasyScreenNodeCls",
+    "ESNC"
 ]
 
 _BASE_SCREEN_NODE_CLS = ScreenNode
@@ -25,6 +27,7 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
     """ 封装界面节点类 按类隔离命名空间与Key名 """
     # 若需要更加复杂的功能支持, 请使用: Modules/UI/EnhancedUI.py
     _AUTO_REGISTER_UI_MAP = {}
+    _INIT_UI_LOAD_FINISH = False
 
     def __init__(self, namespace, name, param):
         _BASE_SCREEN_NODE_CLS.__init__(self, namespace, name, param)
@@ -33,6 +36,7 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
 
     @staticmethod
     def _AUTO_REGISTER_UI_FINISH_EVENT(_={}):
+        ScreenNodeWrapper._INIT_UI_LOAD_FINISH = True
         for func in ScreenNodeWrapper._AUTO_REGISTER_UI_MAP.values():
             TRY_EXEC_FUN(func)
 
@@ -128,9 +132,6 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
         # RAII资源管理初始化
         self.setDRAIIEnvState(True)
         self.loadALLDRAIIRes()
-
-    def Update(self):
-        pass
 
     def Destroy(self):
         """ UI_DESTROY方法 请确保重写后调用父级 """
