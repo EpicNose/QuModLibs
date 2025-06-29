@@ -602,10 +602,44 @@ class QuickLobbyManager(BaseLobbyManager[QuickLobbyPlayerComp]):
     """
     def __init__(self):
         BaseLobbyManager.__init__(self)
+        self._globalMemoryMap = {}
+        self._globalDataRPCInit = False
+
+    def onCreate(self):
+        BaseLobbyManager.onCreate(self)
+        self._globalMemoryMap = self.initGlobalMemoryMap()
+        if BaseLobbyManager.LOCAL_DEBUG_MODE or not self._globalMemoryMap:
+            return
+        # 非DEBUG模式 远程请求后台全局数据
+        def _callBack(datas):
+            # type: (dict | None) -> None
+            self._globalDataRPCInit = True
+            if datas:
+                for k, v in ((v["key"], v["value"]) for v in datas["entity"]["data"]):
+                    self._globalMemoryMap[k] = v
+            else:
+                raise RuntimeError("全局数据获取失败, 请检查参数配置")
+        BaseLobbyManager.LOBBY_GET_STORAGE(0, list(self._globalMemoryMap), _callBack)
 
     def initMemoryMap(self):
-        """ 初始化内存映射表 """
+        # type: () -> dict
+        """ 初始化内存映射表(适用于分配用户数据) """
         return {}
+
+    def initGlobalMemoryMap(self):
+        # type: () -> dict
+        """ 初始化全局内存映射表(适用于分配全局数据)
+        备注：
+            - 用于初始化全局共享的数据结构。
+            - 返回值应为 dict 类型。
+            - 处于DEBUG模式下始终返回用户预设值(请自行判断以便模拟)
+        """
+        return {}
+
+    def getGlobalDataMap(self):
+        # type: () -> dict
+        """ 获取全局数据表(只读) """
+        return self._globalMemoryMap
 
     def _playerCompInitHook(self, comp):
         # type: (QuickLobbyPlayerComp) -> None
