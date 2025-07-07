@@ -14,6 +14,8 @@ lambda: "By Zero123"
 _USE_SAVE_KEY = "{}_QComps".format(ModDirName)
 universalObject = UniversalObject()
 
+_gameComp = clientApi.GetEngineCompFactory().CreateGame(levelId)
+
 class QEntityCompService(BaseService):
     def __init__(self):
         BaseService.__init__(self)
@@ -36,9 +38,9 @@ class QEntityCompService(BaseService):
 
     def getMemoryLiveState(self, entityId):
         """ 获取实体是否处于内存状态中 """
-        comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
-        alive = comp.HasEntity(entityId)
-        return alive
+        # comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
+        # alive = comp.HasEntity(entityId)
+        return _gameComp.HasEntity(entityId)
 
     def getEntityRuntime(self, entityId=""):
         """ 获取实体运行时管理对象 """
@@ -194,8 +196,8 @@ class QBaseEntityComp(_QBaseEntityComp):
     def bind(self, entityId=""):
         if self.entityId:
             return False
-        comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
-        alive = comp.HasEntity(entityId)
+        # comp = clientApi.GetEngineCompFactory().CreateGame(levelId)
+        alive = _gameComp.HasEntity(entityId)
         if not alive or not self._preVerification(entityId):
             return False
         self.entityId = entityId
