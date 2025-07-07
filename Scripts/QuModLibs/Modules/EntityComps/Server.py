@@ -16,6 +16,8 @@ lambda: "By Zero123"
 _USE_SAVE_KEY = "{}_QComps".format(ModDirName)
 universalObject = UniversalObject()
 
+_gameComp = serverApi.GetEngineCompFactory().CreateGame(levelId)
+
 class QEntityCompService(BaseService):
     def __init__(self):
         BaseService.__init__(self)
@@ -25,23 +27,23 @@ class QEntityCompService(BaseService):
 
     def getMemoryLiveState(self, entityId):
         """ 获取实体是否处于内存状态中 """
-        comp = serverApi.GetEngineCompFactory().CreateModAttr(entityId)
-        return comp.GetAttr(_USE_SAVE_KEY, None) != None
+        # comp = serverApi.GetEngineCompFactory().CreateModAttr(entityId)
+        # return comp.GetAttr(_USE_SAVE_KEY, None) != None
+        return _gameComp.IsEntityAlive(entityId)
 
     def getEntityRuntime(self, entityId=""):
         """ 获取实体运行时管理对象 """
         if self._closeState:
             # 游戏关闭后为确保资源安全将无法再次获取实体运行时数据
             return None
-        comp = serverApi.GetEngineCompFactory().CreateGame(levelId)
-        alive = comp.IsEntityAlive(entityId)
+        alive = _gameComp.IsEntityAlive(entityId)
         if not alive:
             return None
         if not entityId in self.entityCompMap:
             # ========== 初始化实体资源数据 ==========
-            comp = serverApi.GetEngineCompFactory().CreateModAttr(entityId)
-            if comp.GetAttr(_USE_SAVE_KEY) == None:
-                comp.SetAttr(_USE_SAVE_KEY, {})
+            # comp = serverApi.GetEngineCompFactory().CreateModAttr(entityId)
+            # if comp.GetAttr(_USE_SAVE_KEY) == None:
+            #     comp.SetAttr(_USE_SAVE_KEY, {})
             newObj = QEntityRuntime(entityId)
             self.entityCompMap[entityId] = newObj
             return newObj
@@ -257,8 +259,7 @@ class QBaseEntityComp(_QBaseEntityComp):
     def bind(self, entityId=""):
         if self.entityId:
             return False
-        comp = serverApi.GetEngineCompFactory().CreateGame(levelId)
-        alive = comp.IsEntityAlive(entityId)
+        alive = _gameComp.IsEntityAlive(entityId)
         if not alive or not self._preVerification(entityId):
             return False
         self.entityId = entityId
