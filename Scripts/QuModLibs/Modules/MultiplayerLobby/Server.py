@@ -273,6 +273,8 @@ class BaseLobbyManager(BaseService, QTemplate):
     """ 调试模式下是否保存数据到存档 """
     LOCAL_DEBUG_FORCE_SIMULATION_UID = 0
     """ 若非0 调试模式下将强制模拟该UID """
+    LOCAL_DEBUG_GLOBAL_DATAS = {}
+    """ 调试模式下全局数据"""
     _LOCAL_DEBUG_DATAS = {}
     _LOCAL_DEBUG_ORDERS = {}
 
@@ -607,8 +609,13 @@ class QuickLobbyManager(BaseLobbyManager[QuickLobbyPlayerComp]):
 
     def onCreate(self):
         BaseLobbyManager.onCreate(self)
+        debugMode = BaseLobbyManager.LOCAL_DEBUG_MODE
+        if debugMode and BaseLobbyManager.LOCAL_DEBUG_GLOBAL_DATAS:
+            # 调试模式下使用本地模拟的全局数据
+            self._globalMemoryMap = BaseLobbyManager.LOCAL_DEBUG_GLOBAL_DATAS
+            return
         self._globalMemoryMap = self.initGlobalMemoryMap()
-        if BaseLobbyManager.LOCAL_DEBUG_MODE or not self._globalMemoryMap:
+        if debugMode or not self._globalMemoryMap:
             return
         # 非DEBUG模式 远程请求后台全局数据
         def _callBack(datas):
