@@ -623,10 +623,12 @@ class QuickLobbyManager(BaseLobbyManager[QuickLobbyPlayerComp]):
             self._globalDataRPCInit = True
             if datas:
                 for k, v in ((v["key"], v["value"]) for v in datas["entity"]["data"]):
-                    self._globalMemoryMap[k] = v
+                    if k == "op_config" and isinstance(v, dict):
+                        for opKey, opValue in v.items():
+                            self._globalMemoryMap[opKey] = opValue
             else:
                 raise RuntimeError("全局数据获取失败, 请检查参数配置")
-        BaseLobbyManager.LOBBY_GET_STORAGE(0, list(self._globalMemoryMap), _callBack)
+        BaseLobbyManager.LOBBY_GET_STORAGE(0, ["op_config"], _callBack)
 
     def initMemoryMap(self):
         # type: () -> dict
