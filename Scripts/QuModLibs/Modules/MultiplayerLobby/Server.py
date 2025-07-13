@@ -641,7 +641,6 @@ class QuickLobbyManager(BaseLobbyManager[QuickLobbyPlayerComp]):
         备注：
             - 用于初始化全局共享的数据结构。
             - 返回值应为 dict 类型。
-            - 处于DEBUG模式下始终返回用户预设值(请自行判断以便模拟)
         """
         return {}
 
