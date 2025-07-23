@@ -2,7 +2,7 @@
 import mod.server.extraServerApi as serverApi
 from ...Util import errorPrint, TRY_EXEC_FUN, getObjectPathName
 from ...IN import RuntimeService
-from SharedRes import (
+from .SharedRes import (
     CallObjData,
     EasyListener,
     SERVER_CALL_EVENT,
@@ -17,6 +17,47 @@ engineSpaceName, engineSystemName = serverApi.GetEngineNamespace(), serverApi.Ge
 def serverImportModule(filePath):
     """ 服务端文件导入 """
     return serverApi.ImportModule(filePath)
+
+class BUILTINS:
+    # ================== 客户端请求处理 ==================
+    @staticmethod
+    def clientRequestHandler(playerId, key, args, kwargs, backKey):
+        # 处理Request请求回调
+        system = LoaderSystem.getSystem()
+        try:
+            ret = system.localCall(key, *args, **kwargs)
+        except Exception as e:
+            system.sendCall(playerId, "__DelCallBackKey__", (key,))
+            raise e
+        system.sendCall(playerId, backKey, (ret,))
+
+    @staticmethod
+    def callClientHandler(playerIdData, key, args, kwargs):
+        """ 处理客户端调用其他玩家客户端的发包请求 """
+        system = LoaderSystem.getSystem()
+        if isinstance(playerIdData, list):
+            return system.sendMultiClientsCall(playerIdData, key, args, kwargs)
+        return system.sendCall(playerIdData, key, args, kwargs)
+    # ================== 客户端请求处理 ==================
+
+    @staticmethod
+    def serverForwardsHandler(datLis):
+        # type: (list[tuple]) -> None
+        system = LoaderSystem.getSystem()
+        for key, args, kwargs in datLis:
+            try:
+                system.localCall(key, *args, **kwargs)
+            except Exception as e:
+                errorPrint("批量调用发生异常 KEY值 '{}' >> {}".format(key, e))
+                import traceback
+                traceback.print_exc()
+
+    @staticmethod
+    def init(system):
+        # type: (LoaderSystem) -> None
+        system.regCustomApi("__Client.Request__", BUILTINS.clientRequestHandler)
+        system.regCustomApi("__CALL.CLIENT__", BUILTINS.callClientHandler)
+        system.regCustomApi("__calls__", BUILTINS.serverForwardsHandler)
 
 class LoaderSystem(ServerSystem, EasyListener):
     """ QuMod加载器系统
@@ -65,7 +106,7 @@ class LoaderSystem(ServerSystem, EasyListener):
         RuntimeService._serverStarting = True
         self.namespace = namespace
         self.systemName = systemName
-        self.httpPlayerId = None
+        self.rpcPlayerId = None
         self._systemList = RuntimeService._serverSystemList
         self._initState = False
         self._regInitState = False
@@ -75,13 +116,14 @@ class LoaderSystem(ServerSystem, EasyListener):
         """ 后置销毁触发 通常是内部使用确保在用户业务之后执行 """
         self._initSystemListen()
         self.systemInit()
+        BUILTINS.init(self)
 
     def _systemCallListenerHook(self, args={}):
         target = "__id__"
         if target in args:
-            self.httpPlayerId = args[target]
+            self.rpcPlayerId = args[target]
             return
-        self.httpPlayerId = None
+        self.rpcPlayerId = None
 
     def _initSystemListen(self):
         self.ListenForEvent(NAMESPACE, SYSTEMNAME, CLIENT_CALL_EVENT, self, self._systemCallListener)

@@ -40,7 +40,7 @@ def _getLoaderSystem():
 
 _loaderSystem = _getLoaderSystem()
 
-def Request(Key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
+def Request(key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
     # type: (str, tuple, dict, object) -> bool
     """ (未来可能移除 推荐使用服务类的安全请求机制)Request 向服务端发送请求, 与Call不同的是,这是双向的,可以取得返回值 """
     from Util import RandomUid
@@ -49,7 +49,7 @@ def Request(Key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
         _loaderSystem.removeCustomApi(backKey)
         return onResponse(*_args, **_kwargs)
     _loaderSystem.regCustomApi(backKey, _backFun)
-    Call("__Client.Request__", playerId, Key, args, kwargs, backKey)
+    Call("__Client.Request__", playerId, key, args, kwargs, backKey)
     return True
 
 def CallOTClient(playerId="", key="", *Args, **Kwargs):
@@ -307,9 +307,6 @@ class Entity(object):
         return comp.Set(Query, Value)
 
 # ======= QuMod提供的一些基于原版API的组件 =======
-@CallBackKey("__DelCallBackKey__")
-def __DelCallBackKey(key=""):
-    return _loaderSystem.removeCustomApi(key)
 
 class QuObjectConversion(__ObjectConversion):
     @staticmethod
@@ -396,25 +393,3 @@ class QuDataStorage:
                 levelcomp.SetConfigData(k, v, v.get(QuDataStorage._isGlobal, False))
             except Exception as e:
                 print(e)
-
-@CallBackKey("__calls__")
-def QUMOD_CLIENT_CALLS_(datLis):
-    # type: (list[tuple]) -> None
-    """ 内置的多callData处理请求 """
-    for key, args, kwargs in datLis:
-        try:
-            LocalCall(key, *args, **kwargs)
-        except Exception as e:
-            errorPrint("CALL发生异常 KEY值 '{}' >> {}".format(key, e))
-            import traceback
-            traceback.print_exc()
-
-def EventHandler(key):
-    """ 注册EventHandler 可搭配QuPresteTool完成代码分析并建立关联 """
-    def _EventHandler(fun):
-        return fun
-    return _EventHandler
-
-def Emit(eventHandler, *args, **kwargs):
-    """ 发送消息 执行特定eventHandler """
-    pass

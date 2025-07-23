@@ -96,12 +96,16 @@ def AllowCall(func):
     _loaderSystem.regCustomApi(key3, func)
     return func
 
-def InjectHttpPlayerId(func):
+def InjectRPCPlayerId(func):
     """ [装饰器] 注入玩家ID接收，可搭配@AllowCall使用（注意先后顺序） """
     def _wrapper(*args, **kwargs):
-        return func(_loaderSystem.httpPlayerId, *args, **kwargs)
+        return func(_loaderSystem.rpcPlayerId, *args, **kwargs)
     _wrapper.__name__ = func.__name__
     return _wrapper
+
+def InjectHttpPlayerId(func):
+    """ [向下兼容] 注入玩家ID接收 可搭配@AllowCall使用（注意先后顺序） """
+    return InjectRPCPlayerId(func)
 
 def LocalCall(funcName="", *args, **kwargs):
     """ 本地调用 执行当前端@AllowCall|@CallBackKey("...")的方法 """
@@ -514,23 +518,6 @@ def TaskProcessCreate(obj):
     """ 创建任务进程 """
     return obj.clone()
 
-# ================== 客户端请求实现 ==================
-@CallBackKey("__Client.Request__")
-def __ClientRequest(PlayerId, Key, Args, Kwargs, BackKey):
-    try:
-        BackData = LocalCall(Key, *Args, **Kwargs)
-    except Exception as e:
-        Call(PlayerId, "__DelCallBackKey__", Key)
-        raise e
-    Call(PlayerId, BackKey, BackData)
-
-@CallBackKey("__CALL.CLIENT__")
-def __CallCLIENT(playerIdData, Key, Args, Kwargs):
-    if isinstance(playerIdData, list):
-        return MultiClientsCall(playerIdData, Key, *Args, **Kwargs)
-    return Call(playerIdData, Key, *Args, **Kwargs)
-# ================== 客户端请求实现 ==================
-
 class QuObjectConversion(__ObjectConversion):
     @staticmethod
     def getClsWithPath(path):
@@ -618,25 +605,3 @@ class QuDataStorage:
                 print(e)
         if saveCount > 0:
             levelcomp.SaveExtraData()
-
-@CallBackKey("__calls__")
-def QUMOD_SERVER_CALLS_(datLis):
-    # type: (list[tuple]) -> None
-    """ 内置的多callData处理请求 """
-    for key, args, kwargs in datLis:
-        try:
-            LocalCall(key, *args, **kwargs)
-        except Exception as e:
-            errorPrint("CALL发生异常 KEY值 '{}' >> {}".format(key, e))
-            import traceback
-            traceback.print_exc()
-
-def EventHandler(key):
-    """ 注册EventHandler 可搭配QuPresteTool完成代码分析并建立关联 """
-    def _EventHandler(fun):
-        return fun
-    return _EventHandler
-
-def Emit(eventHandler, *args, **kwargs):
-    """ 发送消息 执行特定eventHandler """
-    pass
