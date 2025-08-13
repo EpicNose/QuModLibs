@@ -19,7 +19,7 @@ IsServerUser = __IN.IsServerUser
 """ 客户端常量_是否为房主 """
 clientApi = __extraClientApi                        # type: extraClientApi
 TickEvent = "OnScriptTickClient"
-System = clientApi.GetSystem("Minecraft","game")    # type: extraClientApi
+System = clientApi.GetSystem("Minecraft", "game")    # type: extraClientApi
 levelId = clientApi.GetLevelId()
 playerId = clientApi.GetLocalPlayerId() 
 Events = _eventsRedirect                            # type: type[_EventsPrompt]

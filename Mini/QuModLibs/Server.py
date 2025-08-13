@@ -1,28 +1,28 @@
 # -*- coding: utf-8 -*-
-from Math import Vec3, Vec2, QBox3D
-from Util import (
+from .Math import Vec3, Vec2, QBox3D
+from .Util import (
     Unknown,
     InitOperation,
     errorPrint,
     _eventsRedirect,
     ObjectConversion as __ObjectConversion,
 )
-from IN import ModDirName
+from .IN import ModDirName
 import mod.server.extraServerApi as serverApi
 TickEvent = "OnScriptTickServer"
 levelId = serverApi.GetLevelId()
-System = serverApi.GetSystem("Minecraft","game")
+System = serverApi.GetSystem("Minecraft", "game")
 Events = _eventsRedirect
 
 def getOwnerPlayerId():
     # type: () -> str | None
     """ 获取房主玩家ID 如果存在(联机大厅/网络游戏中不存在房主玩家) """
-    from IN import RuntimeService
+    from .IN import RuntimeService
     return RuntimeService._envPlayerId
 
 def regModLoadFinishHandler(func):
     """ 注册Mod加载完毕后触发的Handler """
-    from IN import RuntimeService
+    from .IN import RuntimeService
     RuntimeService._serverLoadFinish.append(func)
     return func
 
@@ -32,7 +32,7 @@ def DestroyEntity(entityId):
 
 def _getLoaderSystem():
     """ 获取加载器系统 """
-    from Systems.Loader.Server import LoaderSystem
+    from .Systems.Loader.Server import LoaderSystem
     return LoaderSystem.getSystem()
 
 _loaderSystem = _getLoaderSystem()
@@ -52,7 +52,7 @@ def UnListenForEvent(eventName, parentObject=None, func=lambda: None):
 def Listen(eventName=""):
     """  [装饰器] 游戏事件监听 """
     eventName = eventName if isinstance(eventName, str) else eventName.__name__
-    from Systems.Loader.Server import LoaderSystem
+    from .Systems.Loader.Server import LoaderSystem
     def _Listen(funObj):
         LoaderSystem.REG_STATIC_LISTEN_FUNC(eventName, funObj)
         return funObj
@@ -60,7 +60,7 @@ def Listen(eventName=""):
 
 def DestroyFunc(func):
     """ [装饰器] 注册销毁回调函数 """
-    from Systems.Loader.Server import LoaderSystem
+    from .Systems.Loader.Server import LoaderSystem
     LoaderSystem.REG_DESTROY_CALL_FUNC(func)
     return func
 
@@ -91,12 +91,16 @@ def AllowCall(func):
     _loaderSystem.regCustomApi(key3, func)
     return func
 
-def InjectHttpPlayerId(func):
+def InjectRPCPlayerId(func):
     """ [装饰器] 注入玩家ID接收，可搭配@AllowCall使用（注意先后顺序） """
     def _wrapper(*args, **kwargs):
-        return func(_loaderSystem.httpPlayerId, *args, **kwargs)
+        return func(_loaderSystem.rpcPlayerId, *args, **kwargs)
     _wrapper.__name__ = func.__name__
     return _wrapper
+
+def InjectHttpPlayerId(func):
+    """ [向下兼容] 注入玩家ID接收 可搭配@AllowCall使用（注意先后顺序） """
+    return InjectRPCPlayerId(func)
 
 def LocalCall(funcName="", *args, **kwargs):
     """ 本地调用 执行当前端@AllowCall|@CallBackKey("...")的方法 """
@@ -118,6 +122,7 @@ class Entity(object):
                 "Value":self.SetValue,
                 "Max":self.SetMax
             }
+
         def __setattr__(self, Name, Value):
             """ 属性设置处理 """
             if Name in Entity.__slots__:
@@ -128,19 +133,23 @@ class Entity(object):
             else:
                 print(Entity.ErrorSet)
                 return None
+
         def SetValue(self,Value):
             """ 设置Value值 """
             comp = serverApi.GetEngineCompFactory().CreateAttr(self.entityId)
             return comp.SetAttrValue(0,Value)
+
         def SetMax(self,Value):
             """ 设置Max值 """
             comp = serverApi.GetEngineCompFactory().CreateAttr(self.entityId)
             return comp.SetAttrMaxValue(0,Value)
+
         @property
         def Value(self):
             # type: () -> int
             comp = serverApi.GetEngineCompFactory().CreateAttr(self.entityId)
             return comp.GetAttrValue(0)
+
         @property
         def Max(self):
             # type: () -> int
@@ -214,6 +223,45 @@ class Entity(object):
         x, y, z = footPos
         return QBox3D(Vec3(sx, sy, sx), Vec3(x, y + sy * 0.5, z), None, rotationAngle = 0 if not useBodyRot else self.Rot[1])
 
+    def callEvent(self, eventName):
+        # type: (str) -> bool
+        """ 触发JSON中特定的事件定义 """
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.TriggerCustomEvent(self.entityId, eventName)
+
+    def getComponents(self):
+        # type: () -> dict[str, object]
+        """ 获取实体持有的运行时JSON组件 """
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.GetComponents()
+
+    def removeComponent(self, compName):
+        # type: (str) -> bool
+        """ 移除特定的JSON组件 """
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.RemoveActorComponent(compName)
+
+    def addComponent(self, compName, data):
+        # type: (str, str | dict) -> bool
+        """ 添加特定的JSON组件及参数 """
+        if isinstance(data, dict):
+            from json import dumps
+            data = dumps(data)
+        comp = serverApi.GetEngineCompFactory().CreateEntityEvent(self.entityId)
+        return comp.AddActorComponent(compName, data)
+
+    def getBlockControlAi(self):
+        # type: () -> bool
+        """ 获取生物AI是否被屏蔽 """
+        comp = serverApi.GetEngineCompFactory().CreateControlAi(self.entityId)
+        return comp.GetBlockControlAi()
+
+    def setBlockControlAi(self, isBlock, freezeAnim=False):
+        # type: (bool, bool) -> bool
+        """ 设置生物AI是否被屏蔽 """
+        comp = serverApi.GetEngineCompFactory().CreateControlAi(self.entityId)
+        return comp.SetBlockControlAi(isBlock, freezeAnim)
+
     def SetMarkVariant(self, value=1):
         # type: (int | float) -> bool
         """ 设置对应JSON组件的MarkVariant值 对应query.mark_variant(底层同步) """
@@ -260,6 +308,38 @@ class Entity(object):
         """ 获取运行时属性数据(根据MOD隔离) """
         comp = serverApi.GetEngineCompFactory().CreateModAttr(self.entityId)
         return comp.GetAttr("{}_{}".format(ModDirName, attrName), nullValue)
+
+    def checkSubstantive(self):
+        # type: () -> bool
+        """ 检查实体是否具有实质性(非物品/抛掷物) """
+        entityTypeEnum = serverApi.GetMinecraftEnum().EntityType
+        comp = serverApi.GetEngineCompFactory().CreateEngineType(self.entityId)
+        entityType = comp.GetEngineType()
+        if entityType & entityTypeEnum.Projectile == entityTypeEnum.Projectile or entityType & entityTypeEnum.ItemEntity == entityTypeEnum.ItemEntity:
+            return False
+        return True
+
+    def getBodyDirVec3(self):
+        # type: () -> Vec3
+        """ 获取基于Body方向的单位向量 """
+        vc = self.Vec3DirFromRot
+        vc.y = 0.0
+        if vc.getLength() > 0.0:
+            vc.convertToUnitVector()
+        return vc
+
+    def convertToWorldVec3(self, absVec):
+        # type: (Vec3) -> Vec3
+        """ 基于当前实体转换一个相对向量到世界向量 """
+        axis = Vec3(0, 1, 0)
+        f = self.getBodyDirVec3()
+        l = f.copy().rotateVector(axis, -90)
+        worldVec3 = f.multiplyOf(absVec.z).addVec(l.multiplyOf(absVec.x))
+        if worldVec3.getLength() > 0.0:
+            worldVec3.convertToUnitVector()
+            worldVec3.multiplyOf(Vec3(absVec.x, 0.0, absVec.z).getLength())
+        worldVec3.y = absVec.y
+        return worldVec3
 
     @property
     def Health(self):
@@ -433,21 +513,6 @@ def TaskProcessCreate(obj):
     """ 创建任务进程 """
     return obj.clone()
 
-# ================== 客户端请求实现 ==================
-@CallBackKey("__Client.Request__")
-def __ClientRequest(PlayerId, Key, Args, Kwargs, BackKey):
-    try:
-        BackData = LocalCall(Key, *Args, **Kwargs)
-    except Exception as e:
-        Call(PlayerId, "__DelCallBackKey__", Key)
-        raise e
-    Call(PlayerId, BackKey, BackData)
-    
-@CallBackKey("__CALL.CLIENT__")
-def __CallCLIENT(PlayerId, Key, Args, Kwargs):
-    Call(PlayerId, Key, *Args, **Kwargs)
-# ================== 客户端请求实现 ==================
-
 class QuObjectConversion(__ObjectConversion):
     @staticmethod
     def getClsWithPath(path):
@@ -535,15 +600,3 @@ class QuDataStorage:
                 print(e)
         if saveCount > 0:
             levelcomp.SaveExtraData()
-
-@CallBackKey("__calls__")
-def QUMOD_SERVER_CALLS_(datLis):
-    # type: (list[tuple]) -> None
-    """ 内置的多callData处理请求 """
-    for key, args, kwargs in datLis:
-        try:
-            LocalCall(key, *args, **kwargs)
-        except Exception as e:
-            errorPrint("CALL发生异常 KEY值 '{}' >> {}".format(key, e))
-            import traceback
-            traceback.print_exc()

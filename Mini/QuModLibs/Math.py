@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import math
-from Util import Math
+from .Util import Math
 lambda: "By Zero123"
 
 class Vec3(object):
@@ -19,7 +19,7 @@ class Vec3(object):
         # type: () -> tuple[float, float, float]
         """ 获取元组 """
         return self._tuple
-    
+
     def _upDate(self):
         """ 刷新Tuple资源 """
         self._tuple = (self.x, self.y, self.z)
@@ -185,6 +185,15 @@ class Vec3(object):
         projLength = Vec3.dot(withVec, otherVec) / otherVec.getLength() ** 2
         return otherVec.copy().convertToUnitVector().scale(projLength)
 
+    @staticmethod
+    def cross(vc1, vc2):
+        # type: (Vec3, Vec3) -> Vec3
+        """ 计算叉积 返回新的 Vec3 向量 """
+        x = vc1.y * vc2.z - vc1.z * vc2.y
+        y = vc1.z * vc2.x - vc1.x * vc2.z
+        z = vc1.x * vc2.y - vc1.y * vc2.x
+        return Vec3(x, y, z)
+
 class QBox3D:
     """ 表示一个支持旋转的简易三维盒子 用于简单的碰撞测量计算 实现便捷索敌/物理计算 """
     def __init__(self, boxSize, centerPos, rotationAxis=None, rotationAngle=0):
@@ -203,7 +212,12 @@ class QBox3D:
         self.rotationAngle = rotationAngle
         # 旋转之前的盒子角点
         self.corners = self.getLocalCorners()
-    
+
+    def posMove(self, moveVc):
+        # type: (Vec3) -> QBox3D
+        self.center.addVec(moveVc)
+        return self
+
     def getScaleXYZ(self):
         # type: () -> Vec3
         """ 获取XYZ大小 """

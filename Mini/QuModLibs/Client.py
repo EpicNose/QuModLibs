@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 客户端端基本功能模块 为减缓IO开销 常用的功能均放置在该文件 其他功能按需导入使用
-from Math import Vec3, Vec2, QBox3D
-from Util import (
+from .Math import Vec3, Vec2, QBox3D
+from .Util import (
     Unknown,
     InitOperation,
     errorPrint,
@@ -9,19 +9,19 @@ from Util import (
     ObjectConversion as __ObjectConversion
 )
 import mod.client.extraClientApi as clientApi
-import IN as __IN
-from IN import ModDirName
+from . import IN as __IN
+from .IN import ModDirName
 IsServerUser = __IN.IsServerUser
 """ 客户端常量_是否为房主 """
 TickEvent = "OnScriptTickClient"
-System = clientApi.GetSystem("Minecraft","game")
+System = clientApi.GetSystem("Minecraft", "game")
 levelId = clientApi.GetLevelId()
 playerId = clientApi.GetLocalPlayerId() 
 Events = _eventsRedirect
 
 def regModLoadFinishHandler(func):
     """ 注册Mod加载完毕后触发的Handler """
-    from IN import RuntimeService
+    from .IN import RuntimeService
     RuntimeService._clientLoadFinish.append(func)
     return func
 
@@ -30,21 +30,21 @@ def creatTemporaryContainer():
 
 def _getLoaderSystem():
     """ 获取加载器系统 """
-    from Systems.Loader.Client import LoaderSystem
+    from .Systems.Loader.Client import LoaderSystem
     return LoaderSystem.getSystem()
 
 _loaderSystem = _getLoaderSystem()
 
-def Request(Key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
+def Request(key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
     # type: (str, tuple, dict, object) -> bool
     """ (未来可能移除 推荐使用服务类的安全请求机制)Request 向服务端发送请求, 与Call不同的是,这是双向的,可以取得返回值 """
-    from Util import RandomUid
+    from .Util import RandomUid
     backKey = RandomUid()
     def _backFun(*_args, **_kwargs):
         _loaderSystem.removeCustomApi(backKey)
         return onResponse(*_args, **_kwargs)
     _loaderSystem.regCustomApi(backKey, _backFun)
-    Call("__Client.Request__", playerId, Key, args, kwargs, backKey)
+    Call("__Client.Request__", playerId, key, args, kwargs, backKey)
     return True
 
 def CallOTClient(playerId="", key="", *Args, **Kwargs):
@@ -66,7 +66,7 @@ def UnListenForEvent(eventName, parentObject=None, func=lambda: None):
 def Listen(eventName):
     """  [装饰器] 游戏事件监听 """
     eventName = eventName if isinstance(eventName, str) else eventName.__name__
-    from Systems.Loader.Client import LoaderSystem
+    from .Systems.Loader.Client import LoaderSystem
     def _Listen(funObj):
         LoaderSystem.REG_STATIC_LISTEN_FUNC(eventName, funObj)
         return funObj
@@ -74,7 +74,7 @@ def Listen(eventName):
 
 def DestroyFunc(func):
     """ [装饰器] 注册销毁回调函数 """
-    from Systems.Loader.Client import LoaderSystem
+    from .Systems.Loader.Client import LoaderSystem
     LoaderSystem.REG_DESTROY_CALL_FUNC(func)
     return func
 
@@ -214,6 +214,38 @@ class Entity(object):
             return None
         return Vec3.tupleToVec(rot)
 
+    def checkSubstantive(self):
+        # type: () -> bool
+        """ 检查实体是否具有实质性(非物品/抛掷物) """
+        entityTypeEnum = clientApi.GetMinecraftEnum().EntityType
+        comp = clientApi.GetEngineCompFactory().CreateEngineType(self.entityId)
+        entityType = comp.GetEngineType()
+        if entityType & entityTypeEnum.Projectile == entityTypeEnum.Projectile or entityType & entityTypeEnum.ItemEntity == entityTypeEnum.ItemEntity:
+            return False
+        return True
+
+    def convertToWorldVec3(self, absVec):
+        # type: (Vec3) -> Vec3
+        """ 基于当前实体转换一个相对向量到世界向量 """
+        axis = Vec3(0, 1, 0)
+        f = self.getBodyDirVec3()
+        l = f.copy().rotateVector(axis, -90)
+        worldVec3 = f.multiplyOf(absVec.z).addVec(l.multiplyOf(absVec.x))
+        if worldVec3.getLength() > 0.0:
+            worldVec3.convertToUnitVector()
+            worldVec3.multiplyOf(Vec3(absVec.x, 0.0, absVec.z).getLength())
+        worldVec3.y = absVec.y
+        return worldVec3
+
+    def getBodyDirVec3(self):
+        # type: () -> Vec3
+        """ 获取基于Body方向的单位向量 """
+        vc = self.Vec3DirFromRot
+        vc.y = 0.0
+        if vc.getLength() > 0.0:
+            vc.convertToUnitVector()
+        return vc
+
     def EntityPointDistance(self, otherEntity="", errorValue=0.0):
         # type: (str, float) -> float
         """ 获取与另外一个实体对应的脚部中心点距离(若实体异常将返回errorValue) """
@@ -270,9 +302,6 @@ class Entity(object):
         return comp.Set(Query, Value)
 
 # ======= QuMod提供的一些基于原版API的组件 =======
-@CallBackKey("__DelCallBackKey__")
-def __DelCallBackKey(key=""):
-    return _loaderSystem.removeCustomApi(key)
 
 class QuObjectConversion(__ObjectConversion):
     @staticmethod
@@ -359,15 +388,3 @@ class QuDataStorage:
                 levelcomp.SetConfigData(k, v, v.get(QuDataStorage._isGlobal, False))
             except Exception as e:
                 print(e)
-
-@CallBackKey("__calls__")
-def QUMOD_CLIENT_CALLS_(datLis):
-    # type: (list[tuple]) -> None
-    """ 内置的多callData处理请求 """
-    for key, args, kwargs in datLis:
-        try:
-            LocalCall(key, *args, **kwargs)
-        except Exception as e:
-            errorPrint("CALL发生异常 KEY值 '{}' >> {}".format(key, e))
-            import traceback
-            traceback.print_exc()

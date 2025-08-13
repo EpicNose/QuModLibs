@@ -2,7 +2,7 @@
 import mod.client.extraClientApi as clientApi
 from ...Util import errorPrint, TRY_EXEC_FUN, getObjectPathName
 from ...IN import RuntimeService
-from SharedRes import (
+from .SharedRes import (
     CallObjData,
     EasyListener,
     SERVER_CALL_EVENT,
@@ -17,6 +17,30 @@ engineSpaceName, engineSystemName = clientApi.GetEngineNamespace(), clientApi.Ge
 def clientImportModule(filePath):
     """ 客户端文件导入 """
     return clientApi.ImportModule(filePath)
+
+class BUILTINS:
+    @staticmethod
+    def _delAPIHandler(key=""):
+        return LoaderSystem.getSystem().removeCustomApi(key)
+
+    @staticmethod
+    def clientForwardsHandler(datLis):
+        # type: (list[tuple]) -> None
+        """ 内置的多callData处理请求 """
+        system = LoaderSystem.getSystem()
+        for key, args, kwargs in datLis:
+            try:
+                system.localCall(key, *args, **kwargs)
+            except Exception as e:
+                errorPrint("批量调用发生异常 KEY值 '{}' >> {}".format(key, e))
+                import traceback
+                traceback.print_exc()
+
+    @staticmethod
+    def init(system):
+        # type: (LoaderSystem) -> None
+        system.regCustomApi("__DelCallBackKey__", BUILTINS._delAPIHandler)
+        system.regCustomApi("__calls__", BUILTINS.clientForwardsHandler)
 
 class LoaderSystem(ClientSystem, EasyListener):
     """ QuMod加载器系统
@@ -75,6 +99,7 @@ class LoaderSystem(ClientSystem, EasyListener):
         """ 后置销毁触发 通常是内部使用确保在用户业务之后执行 """
         self._initSystemListen()
         self.systemInit()
+        BUILTINS.init(self)
     
     def _initSystemListen(self):
         self.ListenForEvent(NAMESPACE, SYSTEMNAME, SERVER_CALL_EVENT, self, self._systemCallListener)

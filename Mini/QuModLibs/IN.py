@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Util import SystemSide
+from .Util import SystemSide
 lambda: "By Zero123"
 
 IsServerUser = False
