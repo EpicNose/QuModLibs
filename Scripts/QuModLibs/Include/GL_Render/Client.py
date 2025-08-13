@@ -8,7 +8,7 @@ from ...Modules.Services.Client import (
     serviceBroadcast,
     listenServiceEvent,
 )
-from SharedRes import (
+from .SharedRes import (
     GL_CUSTOM_QUERY,
     JSONRenderData,
     GL_RES_OPT,

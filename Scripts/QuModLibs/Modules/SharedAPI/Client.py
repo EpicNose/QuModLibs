@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ...Client import clientApi, levelId
-from Util import SharedBox
+from .Util import SharedBox
 
 lambda: "By Zero123"
 

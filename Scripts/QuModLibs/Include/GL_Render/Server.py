@@ -2,7 +2,7 @@
 from ...Server import *
 from ...Util import TRY_EXEC_FUN
 from ...Modules.Services.Server import BaseService, BaseEvent, serviceBroadcast
-from SharedRes import (
+from .SharedRes import (
     GL_OPT_INSTRUCT,
     GL_BASE_RES_OPT,
     GL_RES_OPT,

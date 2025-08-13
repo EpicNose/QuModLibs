@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ...Server import serverApi, levelId, _loaderSystem
 from ..Services.Server import BaseService
-from Globals import (
+from .Globals import (
     _ItemBasicInfo,
     _ItemData,
     _InventoryData,

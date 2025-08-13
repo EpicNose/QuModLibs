@@ -3,13 +3,13 @@ from ...Server import serverApi, Entity, levelId
 from ...Util import TRY_EXEC_FUN, UniversalObject
 from ...IN import ModDirName
 from ..Services.Server import BaseService
-from Globals import (
+from .Globals import (
     QUnBindIN,
     _QBaseEntityComp,
     QEntityCompFlags,
     QEntityRuntime,
 )
-from BehaviorTree import _QBaseTaskNode, QBaseNode, QSharedData
+from .BehaviorTree import _QBaseTaskNode, QBaseNode, QSharedData
 from copy import copy
 import weakref
 lambda: "By Zero123"

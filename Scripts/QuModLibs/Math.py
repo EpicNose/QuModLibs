@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import math
-from Util import Math
+from .Util import Math
 lambda: "By Zero123"
 
 class Vec3(object):

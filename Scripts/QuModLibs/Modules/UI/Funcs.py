@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ...Client import clientApi, levelId
-from Client import QUIControlFuntion, QUIAutoControlFuntion, QGridData, EasyScreenNodeCls, ScreenNodeWrapper
+from .Client import QUIControlFuntion, QUIAutoControlFuntion, QGridData, EasyScreenNodeCls, ScreenNodeWrapper
 from math import ceil
 lambda: "UI扩展功能 By Zero123"
 

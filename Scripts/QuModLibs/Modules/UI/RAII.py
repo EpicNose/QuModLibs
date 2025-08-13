@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ...Client import *
 from ...Util import QRAIIDelayed
-from EnhancedUI import (
+from .EnhancedUI import (
     QEControlFuntion,
     ScreenNodeWrapper,
     LifecycleBind,

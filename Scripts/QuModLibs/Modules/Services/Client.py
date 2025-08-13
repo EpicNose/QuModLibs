@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ...Client import ListenForEvent, UnListenForEvent, _loaderSystem, Events, Call, CallBackKey, playerId
-from Globals import _BaseService, _ServiceManager, _AutoStopService, BaseEvent, BaseBusiness, KeyBusiness, QRequests
+from .Globals import _BaseService, _ServiceManager, _AutoStopService, BaseEvent, BaseBusiness, KeyBusiness, QRequests
 lambda: "Service By Zero123"
 
 __all__ = [

@@ -9,7 +9,7 @@ from ..Services.Globals import (
 )
 from ...Client import ListenForEvent, UnListenForEvent
 from ...Util import QRAIIDelayed, QBaseRAIIEnv
-from Client import QUICanvas, QUIControlFuntion
+from .Client import QUICanvas, QUIControlFuntion
 lambda: "增强版UI模块, 提供更为高阶的UI管理逻辑"
 
 class UIEventListener(QRAIIDelayed):
@@ -179,7 +179,10 @@ class QEControlFuntion(QUIControlFuntion, IBaseQECanvas):
 
     def _cleanup(self):
         QRAIIDelayed._cleanup(self)
-        self.removeControl()
+        if self.getUiNode()._raiiCleanState:
+            self.removeControl(True)
+        else:
+            self.removeControl(False)
 
 def UI_INIT_ERASURE(timelyMode=True):
     """ 用于对UI_ARGS进行擦除 隐式处理参数 """

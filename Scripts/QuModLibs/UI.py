@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from QuClientApi.ui.screenNode import ScreenNode as BaseScreenNode
+from .QuClientApi.ui.screenNode import ScreenNode as BaseScreenNode
 from mod.client.ui.screenNode import ScreenNode
 import mod.client.extraClientApi as clientApi
-from Util import (
+from .Util import (
     ModDirName,
     RandomUid,
     ExceptionHandling,
@@ -10,7 +10,7 @@ from Util import (
     TRY_EXEC_FUN,
     QDRAIIEnv
 )
-from Client import ListenForEvent, UnListenForEvent
+from .Client import ListenForEvent, UnListenForEvent
 from types import MethodType
 from functools import wraps
 lambda: "By Zero123"
@@ -300,7 +300,7 @@ class EasyScreenNodeCls(BaseScreenNode):
             IsPushScreen=False
         ):
         UiName = UiName if UiName else RandomUid()
-        from Client import creatTemporaryContainer
+        from .Client import creatTemporaryContainer
         """ 
             [装饰器] 用于绑定界面类与UI.json文件的操作
             大多数情况下只要设置 UiDef="xxx.main"即可
@@ -612,7 +612,7 @@ class EasyScreenNodeCls(BaseScreenNode):
             EventName = "GridComponentSizeChangedClientEvent"
             setattr(uiNode, RanDomName, QuSystemGridComponentSizeChangedClientEvent)
             # System.ListenForEvent(EnSp, EnSy, EventName,uiNode, getattr(uiNode,RanDomName))
-            from Client import _loaderSystem
+            from .Client import _loaderSystem
             _loaderSystem.unsafeUpdate(
                 ListenForEvent(EventName,uiNode,getattr(uiNode,RanDomName))
             )
@@ -642,7 +642,7 @@ class EasyScreenNodeCls(BaseScreenNode):
         GetUi = cls.GetUi()
         if not GetUi:
             from copy import deepcopy
-            import UI
+            from . import UI
             NewCls = deepcopy(cls.ScreenNodeCls)
             setattr(UI, cls.RandomSc, NewCls)
             # 创建UI界面

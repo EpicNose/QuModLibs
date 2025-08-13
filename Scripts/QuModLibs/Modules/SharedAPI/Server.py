@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ...Server import serverApi
 from ..EntityComps.Server import QBaseEntityComp
-from Util import SharedBox, _DEFAULT
+from .Util import SharedBox, _DEFAULT
 
 lambda: "By Zero123"
 

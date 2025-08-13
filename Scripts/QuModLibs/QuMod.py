@@ -2,8 +2,8 @@
 from mod.common.mod import Mod
 import mod.server.extraServerApi as serverApi
 import mod.client.extraClientApi as clientApi
-from Util import TRY_EXEC_FUN
-import IN
+from .Util import TRY_EXEC_FUN
+from . import IN
 
 class _TempData:
     """ modMain临时数据储存 包含了初始化注册的一些信息 """
@@ -15,7 +15,9 @@ class _TempData:
 
 class Include:
     attackExtend = False
-    """ AC战斗机制 链攻击系统(商务纠纷暂已屏蔽) """
+    """ AC战斗机制 链攻击系统
+        @依赖项: GLRender - 应用与全局节点同步管理
+    """
     glRender = False
     """ GLRender 玩家资源渲染系统 """
 
@@ -36,7 +38,7 @@ class QMain(object):
             from threading import current_thread
             IN.RuntimeService._serverThreadID = current_thread().ident
         if IN.RuntimeService._serverSystemList or IN.RuntimeService._serverLoadBefore:
-            from Systems.Loader.Server import LoaderSystem
+            from .Systems.Loader.Server import LoaderSystem
             LoaderSystem.getSystem()    # 初始化服务端加载器
 
     @Mod.InitClient()
@@ -49,7 +51,7 @@ class QMain(object):
             from threading import current_thread
             IN.RuntimeService._clientThreadID = current_thread().ident
         if IN.RuntimeService._clientSystemList or IN.RuntimeService._clientLoadBefore:
-            from Systems.Loader.Client import LoaderSystem
+            from .Systems.Loader.Client import LoaderSystem
             LoaderSystem.getSystem()    # 初始化客户端加载器
 
     def _loadServerInclude(self):

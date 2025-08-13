@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Util import Queue
+from .Util import Queue
 from ..Services.Server import BaseService
 from ...Util import TRY_EXEC_FUN
 

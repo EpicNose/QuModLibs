@@ -3,7 +3,7 @@ from ...Client import clientApi, Entity, levelId
 from ...Util import TRY_EXEC_FUN, UniversalObject
 from ...IN import ModDirName
 from ..Services.Client import BaseService
-from Globals import (
+from .Globals import (
     QUnBindIN,
     _QBaseEntityComp,
     QEntityCompFlags,

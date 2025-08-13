@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls, ScreenNodeWrapper
+from .Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls, ScreenNodeWrapper
 from ...Client import clientApi, ListenForEvent, UnListenForEvent, levelId
 from ..Utils.TimeLine import QTimeLine
 from copy import copy

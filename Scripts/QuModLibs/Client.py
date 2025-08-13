@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # 客户端端基本功能模块 为减缓IO开销 常用的功能均放置在该文件 其他功能按需导入使用
-from Math import Vec3, Vec2, QBox3D
-from Util import (
+from .Math import Vec3, Vec2, QBox3D
+from .Util import (
     Unknown,
     InitOperation,
     errorPrint,
@@ -10,11 +10,11 @@ from Util import (
 )
 if 1 > 2:
     # 阻止补全库被真正import降低运行时开销
-    import QuClientApi.extraClientApi as extraClientApi
-    from QuClientApi.Events import Events as _EventsPrompt
+    from .QuClientApi import extraClientApi
+    from .QuClientApi.Events import Events as _EventsPrompt
 import mod.client.extraClientApi as __extraClientApi
-import IN as __IN
-from IN import ModDirName
+from . import IN as __IN
+from .IN import ModDirName
 IsServerUser = __IN.IsServerUser
 """ 客户端常量_是否为房主 """
 clientApi = __extraClientApi                        # type: extraClientApi
@@ -26,7 +26,7 @@ Events = _eventsRedirect                            # type: type[_EventsPrompt]
 
 def regModLoadFinishHandler(func):
     """ 注册Mod加载完毕后触发的Handler """
-    from IN import RuntimeService
+    from .IN import RuntimeService
     RuntimeService._clientLoadFinish.append(func)
     return func
 
@@ -35,7 +35,7 @@ def creatTemporaryContainer():
 
 def _getLoaderSystem():
     """ 获取加载器系统 """
-    from Systems.Loader.Client import LoaderSystem
+    from .Systems.Loader.Client import LoaderSystem
     return LoaderSystem.getSystem()
 
 _loaderSystem = _getLoaderSystem()
@@ -43,7 +43,7 @@ _loaderSystem = _getLoaderSystem()
 def Request(key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
     # type: (str, tuple, dict, object) -> bool
     """ (未来可能移除 推荐使用服务类的安全请求机制)Request 向服务端发送请求, 与Call不同的是,这是双向的,可以取得返回值 """
-    from Util import RandomUid
+    from .Util import RandomUid
     backKey = RandomUid()
     def _backFun(*_args, **_kwargs):
         _loaderSystem.removeCustomApi(backKey)
@@ -71,7 +71,7 @@ def UnListenForEvent(eventName, parentObject=None, func=lambda: None):
 def Listen(eventName):
     """  [装饰器] 游戏事件监听 """
     eventName = eventName if isinstance(eventName, str) else eventName.__name__
-    from Systems.Loader.Client import LoaderSystem
+    from .Systems.Loader.Client import LoaderSystem
     def _Listen(funObj):
         LoaderSystem.REG_STATIC_LISTEN_FUNC(eventName, funObj)
         return funObj
@@ -79,7 +79,7 @@ def Listen(eventName):
 
 def DestroyFunc(func):
     """ [装饰器] 注册销毁回调函数 """
-    from Systems.Loader.Client import LoaderSystem
+    from .Systems.Loader.Client import LoaderSystem
     LoaderSystem.REG_DESTROY_CALL_FUNC(func)
     return func
 

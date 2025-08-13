@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from Math import Vec3, Vec2, QBox3D
-from Util import (
+from .Math import Vec3, Vec2, QBox3D
+from .Util import (
     Unknown,
     InitOperation,
     errorPrint,
@@ -9,25 +9,25 @@ from Util import (
 )
 if 1 > 2:
     # 阻止补全库被真正import降低运行时开销
-    import QuServerApi.extraServerApi as extraServerApi
-    from QuServerApi.Events import Events as _EventsPrompt
-from IN import ModDirName
+    from .QuServerApi import extraServerApi
+    from .QuServerApi.Events import Events as _EventsPrompt
+from .IN import ModDirName
 import mod.server.extraServerApi as __extraServerApi
 serverApi = __extraServerApi                        # type: extraServerApi
 TickEvent = "OnScriptTickServer"
 levelId = serverApi.GetLevelId()
-System = serverApi.GetSystem("Minecraft","game")    # type: extraServerApi
+System = serverApi.GetSystem("Minecraft", "game")    # type: extraServerApi
 Events = _eventsRedirect                            # type: type[_EventsPrompt]
 
 def getOwnerPlayerId():
     # type: () -> str | None
     """ 获取房主玩家ID 如果存在(联机大厅/网络游戏中不存在房主玩家) """
-    from IN import RuntimeService
+    from .IN import RuntimeService
     return RuntimeService._envPlayerId
 
 def regModLoadFinishHandler(func):
     """ 注册Mod加载完毕后触发的Handler """
-    from IN import RuntimeService
+    from .IN import RuntimeService
     RuntimeService._serverLoadFinish.append(func)
     return func
 
@@ -37,7 +37,7 @@ def DestroyEntity(entityId):
 
 def _getLoaderSystem():
     """ 获取加载器系统 """
-    from Systems.Loader.Server import LoaderSystem
+    from .Systems.Loader.Server import LoaderSystem
     return LoaderSystem.getSystem()
 
 _loaderSystem = _getLoaderSystem()
@@ -57,7 +57,7 @@ def UnListenForEvent(eventName, parentObject=None, func=lambda: None):
 def Listen(eventName=""):
     """  [装饰器] 游戏事件监听 """
     eventName = eventName if isinstance(eventName, str) else eventName.__name__
-    from Systems.Loader.Server import LoaderSystem
+    from .Systems.Loader.Server import LoaderSystem
     def _Listen(funObj):
         LoaderSystem.REG_STATIC_LISTEN_FUNC(eventName, funObj)
         return funObj
@@ -65,7 +65,7 @@ def Listen(eventName=""):
 
 def DestroyFunc(func):
     """ [装饰器] 注册销毁回调函数 """
-    from Systems.Loader.Server import LoaderSystem
+    from .Systems.Loader.Server import LoaderSystem
     LoaderSystem.REG_DESTROY_CALL_FUNC(func)
     return func
 

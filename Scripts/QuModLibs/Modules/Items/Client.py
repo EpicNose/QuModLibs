@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ...Client import clientApi, levelId, playerId
-from Globals import (
+from .Globals import (
     _ItemBasicInfo,
     _ItemData,
     _InventoryData,
