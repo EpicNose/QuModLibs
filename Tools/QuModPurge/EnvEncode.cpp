@@ -3,7 +3,7 @@
 #include <vector>
 
 #ifdef _WIN32
-#include "Windows.h"
+#include <Windows.h>
 void Encoding::initEnvcode()
 {
     std::locale::global(std::locale(".UTF-8"));

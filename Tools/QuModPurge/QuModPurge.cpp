@@ -135,7 +135,9 @@ public:
 		fileTxt = std::regex_replace(fileTxt, wrapperUIRe, R"(class ScreenNodeWrapper($1$2):)");
 
 		// BaseScreenNode处理
-		std::regex pattern(R"(\bfrom\s+QuClientApi\.ui\.screenNode\s+import\s+ScreenNode\s+as\s+BaseScreenNode\b)");
+		std::regex pattern(
+			R"(\bfrom\s+\.?QuClientApi\.ui\.screenNode\s+import\s+ScreenNode\s+as\s+BaseScreenNode\b)"
+		);
 		std::string content = std::regex_replace(fileTxt, pattern, "", std::regex_constants::format_first_only);
 		replaceAll(content, "BaseScreenNode", "ScreenNode");	// 补全依赖替换
 		std::ofstream outFile(path, std::ios::binary);
