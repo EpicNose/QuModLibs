@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from QuModLibs.QuMod import *
+from .QuModLibs.QuMod import *
 
 miniMod = EasyMod()
 

@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-from QuModLibs.Client import *
+from .QuModLibs.Client import *
 

@@ -1,4 +1,4 @@
-## QuModLibs MINI(v1.3.3)
+## QuModLibs MINI(v1.4)
  
 ### 介绍
 MINI版本提供了精简的运行环境 有且仅包含服务端/客户端的基本监听与通信
