@@ -108,7 +108,7 @@ class BaseNBTView:
     @staticmethod
     def pyObjectToNBTData(value, castType=AUTO_TYPE):
         """ 将Python对象转换为NBT数据 """
-        typeId = 0
+        typeId = castType
         if castType == BaseNBTView.AUTO_TYPE:
             # 自动转换类型
             typeId = NBT_TYPE.AUTO_CAST[type(value)]
@@ -263,7 +263,8 @@ class EnchNBTView(BaseNBTView):
             view = BaseNBTView()
             view.setKey("id", self.enchId, NBT_TYPE.SHORT)
             view.setKey("lvl", self.level, NBT_TYPE.SHORT)
-            view.setKey("modEnchant", self.modEnchant, NBT_TYPE.STRING)
+            if self.modEnchant:
+                view.setKey("modEnchant", self.modEnchant, NBT_TYPE.STRING)
             return view
 
         def toNBTDict(self):
