@@ -599,6 +599,13 @@ class _ItemData:
             # 初始化userData
             self.setUserData(dict())
 
+    def clearNeteaseEnchData(self):
+        """ 清除网易附魔数据(适用于纯NBT操作时) """
+        self._dicArgs["enchantData"] = []
+        self._dicArgs["modEnchantData"] = []
+        self.enchantData = self._dicArgs["enchantData"]
+        self.modEnchantData = self._dicArgs["modEnchantData"]
+
     def createNBTDataView(self, key, defaultValue=None):
         # type: (str, dict | list | None) -> BaseNBTView
         """ 获取并初始化指定的NBT数据层视图 """
