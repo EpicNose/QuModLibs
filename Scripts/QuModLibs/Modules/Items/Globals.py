@@ -585,12 +585,18 @@ class _ItemData:
     def fetchOrInitNBTData(self, key, defaultValue=None):
         # type: (str, dict | list | None) -> dict
         """ 获取并初始化指定的NBT数据层 """
+        self.initUserData()
         if not key in self.userData:
             if defaultValue is None:
                 defaultValue = dict()
             self.userData[key] = defaultValue
             self.setUserData(self.userData)
         return self.userData[key]
+
+    def initUserData(self):
+        if not isinstance(self._dicArgs.get("userData"), dict):
+            # 初始化userData
+            self.setUserData(dict())
 
     def createNBTDataView(self, key, defaultValue=None):
         # type: (str, dict | list | None) -> BaseNBTView
