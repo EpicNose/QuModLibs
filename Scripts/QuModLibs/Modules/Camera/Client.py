@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from ...Client import ListenForEvent, UnListenForEvent, clientApi, playerId, levelId, Entity, Vec3
+import math
 
 lambda: "QuModLibs 摄像机模块 By Zero123"
 
@@ -23,9 +24,12 @@ class CameraData:
         self.z = pos[2]
         self.rotX = rot[0]
         self.rotY = rot[1]
+        self.rotZ = 0.0
+        if len(rot) >= 3:
+            self.rotZ = rot[2]
     
     def __str__(self):
-        return "<CameraData.{}: {} {}>".format(id(self), (self.x, self.y, self.z), (self.rotX, self.rotY))
+        return "<CameraData.{}: {} {} {}>".format(id(self), (self.x, self.y, self.z), (self.rotX, self.rotY, self.rotZ))
 
 class LensPlayer:
     """ 镜头播放器 """
@@ -62,7 +66,7 @@ class LensPlayer:
     def loadAnim(self, obj):
         # type: (CameraData) -> None
         comp = clientApi.GetEngineCompFactory().CreateCamera(levelId)
-        comp.LockCamera((obj.x, obj.y, obj.z), (obj.rotX, obj.rotY))
+        comp.LockCamera((obj.x, obj.y, obj.z), (obj.rotX, obj.rotY, obj.rotZ))
         
     def onFpsUpdate(self):
         if not self._animObj:
@@ -178,7 +182,10 @@ class LensAnim:
         # type: (list[float]) -> CameraData
         """ 转换到摄像机参数 """
         self._lastCameraData = lis
-        obj = CameraData((lis[0], lis[1], lis[2]), (lis[3], lis[4]))
+        rot = (lis[3], lis[4])
+        if len(lis) >= 6:
+            rot = (lis[3], lis[4], lis[5])
+        obj = CameraData((lis[0], lis[1], lis[2]), rot)
         self.formatTransformation(obj)
         return obj
     
@@ -239,18 +246,22 @@ class LensAnim:
         if self._positionProcess != LensAnimPositionProcessType.RELATIVE:
             return
         playerObj = Entity(playerId)
-        axis = Vec3(0, 1, 0)                        # 旋转轴
 
         _, rY = playerObj.Rot
         obj.rotY += rY
 
-        # 相对的旋转
-        posVec = Vec3(-obj.x, obj.y, -obj.z).rotateVector(axis, 360 - rY)
-        posVec.addTuple(playerObj.Pos)
+        # 相对位置转换到世界坐标
+        rad = math.radians(rY)
+        x, y, z = obj.x, obj.y, obj.z
 
-        obj.x = posVec.x
-        obj.y = posVec.y
-        obj.z = posVec.z
+        worldX = x * math.cos(rad) - z * math.sin(rad)
+        worldZ = x * math.sin(rad) + z * math.cos(rad)
+        worldY = y
+
+        # 加上玩家的世界位置
+        obj.x = playerObj.Pos[0] + worldX
+        obj.y = playerObj.Pos[1] + worldY
+        obj.z = playerObj.Pos[2] + worldZ
 
     @staticmethod
     def loadBEJSONAnim(jsonDict, unit = 16.0, yOff = -1.62, onStart = lambda *_: None, onEnd = lambda *_: None):
@@ -261,22 +272,21 @@ class LensAnim:
             @yOff y轴偏移物理单位
         """
         data = {}
-        hasRotZ = False
         for k, v in jsonDict.items():
             for timeLine, trData in v.items():
                 if not timeLine in data:
-                    data[timeLine] = [0 for _ in range(5)]
+                    data[timeLine] = [0 for _ in range(6)]
                 dt = data[timeLine]
                 if k == "rotation":
                     dt[3] = trData[0]
                     dt[4] = trData[1]
-                    if len(trData) >= 3 and trData[2] != 0:
-                        hasRotZ = True
+                    if len(trData) >= 3:
+                        dt[5] = trData[2]
+                    else:
+                        dt[5] = 0.0
                 elif k == "position":
                     dt[0] = -trData[0]
                     dt[1] = trData[1] + yOff * unit
                     dt[2] = trData[2]
-        if hasRotZ:
-            print("LensAnim: 暂不支持RotZ轴 相关参数已被丢弃")
         obj = LensAnim(animDict = data, positionProcess = LensAnimPositionProcessType.RELATIVE, unit = unit, onStart = onStart, onEnd = onEnd)
         return obj
