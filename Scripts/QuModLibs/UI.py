@@ -132,6 +132,9 @@ class ScreenNodeWrapper(_BASE_SCREEN_NODE_CLS, QDRAIIEnv, BaseScreenNode):
         # RAII资源管理初始化
         self.setDRAIIEnvState(True)
         self.loadALLDRAIIRes()
+    
+    def Update(self):
+        pass
 
     def Destroy(self):
         """ UI_DESTROY方法 请确保重写后调用父级 """
