@@ -2,6 +2,7 @@
 from .Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls, ScreenNodeWrapper
 from ...Client import clientApi, ListenForEvent, UnListenForEvent, levelId
 from ..Utils.TimeLine import QTimeLine
+from ...Util import QDRAIIEnv, QRAIIDelayed
 from copy import copy
 lambda: "UI动画模块 By Zero123"
 
@@ -384,12 +385,22 @@ class QAnimsControl(QUIControlFuntion):
     def hasAnim(self):
         return bool(self._animSet)
 
-class QAnimManager(QUIAutoControlFuntion):
+class QAnimManager(QUIAutoControlFuntion, QRAIIDelayed):
     """ Qu动画管理器 """
     def __init__(self, uiNode):
         QUIAutoControlFuntion.__init__(self, uiNode, "")
         self._conAnimDict = {}  # type: dict[str, QAnimsControl]
         """ 控件动画表 """
+        self._raiiState = False
+
+    # RAII接口支持
+    def _loadResource(self):
+        self._raiiState = True
+        self.startEventUpdate()
+
+    def _cleanup(self):
+        self._raiiState = False
+        self.stopEventUpdate()
 
     def fpsUpdate(self, mut=1.0):
         if self._conAnimDict:
@@ -399,9 +410,19 @@ class QAnimManager(QUIAutoControlFuntion):
 
     @classmethod
     def bindNode(cls, uiNode):
-        """ 绑定节点 """
+        """ 通用绑定节点, 适用于全HUD_UI界面, 支持非QuModUI """
         obj = cls(uiNode)
         obj.createControl()
+        return obj
+
+    @classmethod
+    def bindRAIINode(cls, uiNode):
+        """ 【QuMod推荐】绑定RAII节点(仅适用于特定协议的UI类) """
+        obj = cls(uiNode)
+        if isinstance(uiNode, QDRAIIEnv):
+            uiNode.addRAIIRes(obj)
+        else:
+            raise RuntimeError("非QDRAIIEnv节点无法绑定RAII资源")
         return obj
 
     def startEventUpdate(self):
@@ -438,6 +459,6 @@ class QAnimManager(QUIAutoControlFuntion):
             # 初始化控件对象
             obj = QAnimsControl.bindControl(self.getUiNode(), _path)
             if not obj.getParentLiveState():
-                raise Exception("无效的控件路径")
+                raise RuntimeError("无效的控件路径，或控件已销毁")
             self._conAnimDict[_path] = obj
         return self._conAnimDict[_path]

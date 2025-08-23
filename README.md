@@ -11,6 +11,7 @@
     - AutoSave列为废弃清单(NX15中彻底删除)
     - EasyScreenNodeCls列为废弃清单(NX15中彻底删除)
     - ItemService现在是单独的模块(Items)不再是Services的子集
+    - QAnimManager新增bindRAIINode 自适应绑定方案
 
 ### Tools工具模块
 我们提供了一些工具模块以便加速项目开发 如果您有兴趣也可以尝试使用
