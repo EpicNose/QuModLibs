@@ -109,10 +109,10 @@ class QLineTransform(QTransform):
 
 class QPosTransform(QLineTransform):
     """ Qu位置变换 """
-    def __init__(self, _startPos = (0, 0), _toPos = (0, 0), useTime = 1.0):
+    def __init__(self, startPos = (0, 0), toPos = (0, 0), useTime = 1.0):
         QLineTransform.__init__(self, useTime=useTime)
-        self._startPos = _startPos
-        self._toPos = _toPos
+        self._startPos = startPos
+        self._toPos = toPos
 
     def onUpdate(self):
         QLineTransform.onUpdate(self)
@@ -124,10 +124,10 @@ class QPosTransform(QLineTransform):
 
 class QSizeTransform(QLineTransform):
     """ Qu大小变换 """
-    def __init__(self, _startSize = (0, 0), _toSize = (0, 0), useTime = 1.0, resizeChildren=False):
+    def __init__(self, startSize = (0, 0), toSize = (0, 0), useTime = 1.0, resizeChildren=False):
         QLineTransform.__init__(self, useTime=useTime)
-        self._startSize = _startSize
-        self._toSize = _toSize
+        self._startSize = startSize
+        self._toSize = toSize
         self.resizeChildren = resizeChildren
 
     def onUpdate(self):
@@ -306,11 +306,11 @@ class QAnimsControl(QUIControlFuntion):
         QUIControlFuntion.onCreate(self)
         self.updateInitConInfo()
     
-    def matchTransformWithClass(self, _transformCls = QTransform):
+    def matchTransformWithClass(self, transformCls = QTransform):
         # type: (type[QTransform]) -> QTransform | None
         """ 基于class匹配已存在的动画 """
         for v in self._animSet:
-            if issubclass(v.__class__, _transformCls):
+            if issubclass(v.__class__, transformCls):
                 return v
         return None
     
