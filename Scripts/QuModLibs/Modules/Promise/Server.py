@@ -29,11 +29,11 @@ def requestEvent(name, callBack):
     POOL_ListenForEvent(name, _callBack)
     return destroy
 
-def waitEvent(name, callBack, time=60.0):
+def waitEvent(name, callBack, time=5.0):
     """
         等待事件触发，支持超时自动取消。
         name: 事件名
-        callBack: 事件回调函数
+        callBack: 事件回调函数，返回True表示处理完成，返回False表示继续等待
         time: 超时时间，单位秒
         return: Promise对象
     """
