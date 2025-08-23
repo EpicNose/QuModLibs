@@ -8,49 +8,89 @@ class Vec3(object):
         PS: Vec3的方法大多是自我操作并返回self的链式设计 如需产生新的对象请使用克隆方法
     """
     def __init__(self, x = 0.0, y = 0.0, z = 0.0):
-        self._disableUpdate = False
-        self._tuple = None      # type: tuple
-        self.x = float(x)
-        self.y = float(y)
-        self.z = float(z)
-        self._upDate()
+        self._tuple = None      # type: tuple[float, float, float] | None
+        self._needUpdate = True
+        self.mX = float(x)
+        self.mY = float(y)
+        self.mZ = float(z)
+
+    @property
+    def x(self):
+        return self.mX
+
+    @x.setter
+    def x(self, value):
+        self._needUpdate = True
+        self.mX = float(value)
+
+    @property
+    def y(self):
+        return self.mY
+
+    @y.setter
+    def y(self, value):
+        self._needUpdate = True
+        self.mY = float(value)
+    
+    @property
+    def z(self):
+        return self.mZ
+
+    @z.setter
+    def z(self, value):
+        self._needUpdate = True
+        self.mZ = float(value)
 
     def getTuple(self):
         # type: () -> tuple[float, float, float]
         """ 获取元组 """
+        if self._needUpdate:
+            self._needUpdate = False
+            self._upDate()
         return self._tuple
 
     def _upDate(self):
-        """ 刷新Tuple资源 """
+        """ 更新内部Tuple资源 """
         self._tuple = (self.x, self.y, self.z)
     
     def __getitem__(self, index):
-        return self._tuple[index]
+        # type: (int) -> float
+        return self.getTuple()[index]
 
     def __setitem__(self, index, value):
         if index >= len(self):
-            raise Exception("索引错误 {} 无效的坐标系".format(index))
-        elif not (isinstance(value, int) or isinstance(value, float)):
-            raise Exception(str(value)+" 不是有效的数值")
-        setattr(self, chr(120 - index), value)
-        self._upDate()
+            raise IndexError("索引错误 {} 无效的坐标系".format(index))
+        setattr(self, "xyz"[index], value)
     
-    def __setattr__(self, __name, __value):
-        attrTuple = ("x", "y", "z")
-        if __name in attrTuple and all(hasattr(self, x) for x in attrTuple):
-            if not (isinstance(__value, int) or isinstance(__value, float)):
-                raise Exception(str(__value)+" 无效")
-            object.__setattr__(self, __name, __value)
-            if self._disableUpdate:
-                return
-            self._upDate()
-        return object.__setattr__(self, __name, __value)
+    def __add__(self, other):
+        if not isinstance(other, Vec3):
+            raise TypeError("不支持的类型 {} 进行加法运算".format(type(other)))
+        return self.copy().addVec(other)
+
+    def __radd__(self, other):
+        return self + other
+    
+    def __sub__(self, other):
+        if not isinstance(other, Vec3):
+            raise TypeError("不支持的类型 {} 进行减法运算".format(type(other)))
+        return self.copy().vectorSubtraction(other)
+
+    def __rsub__(self, other):
+        return -self + other
+
+    def __neg__(self):
+        return self.copy().multiplyOf(-1.0)
+
+    def __eq__(self, value):
+        if not isinstance(value, Vec3):
+            return False
+        return value.getTuple() == self.getTuple()
 
     def __len__(self):
         return 3
 
     def __str__(self):
-        return "<{} {}>".format(self.__class__.__name__, self._tuple.__str__())
+        return "<{} {}>".format(self.__class__.__name__, self.getTuple().__str__())
     
     @staticmethod
     def tupleToVec(tuple):
@@ -72,34 +112,32 @@ class Vec3(object):
         # type: () -> Vec3
         """ 转换为单位向量 返回self """
         length = self.getLength()
-        self._disableUpdate = True
         self.x = self.x / length
         self.y = self.y / length
         self.z = self.z / length
-        self._disableUpdate = False
-        self._upDate()
         return self
+    
+    def safeConvertToUnitVector(self):
+        # type: () -> Vec3
+        """ 安全转换为单位向量 返回self """
+        if self.getLength() <= 0.0001:
+            return self
+        return self.convertToUnitVector()
 
     def addVec(self, nextVec3):
         # type: (Vec3) -> Vec3
         """ 向量加法运算 返回self """
-        self._disableUpdate = True
         self.x += nextVec3.x
         self.y += nextVec3.y
         self.z += nextVec3.z
-        self._disableUpdate = False
-        self._upDate()
         return self
     
     def vectorSubtraction(self, nextVec3):
         # type: (Vec3) -> Vec3
         """ 向量减法运算 返回self """
-        self._disableUpdate = True
         self.x -= nextVec3.x
         self.y -= nextVec3.y
         self.z -= nextVec3.z
-        self._disableUpdate = False
-        self._upDate()
         return self
     
     def addTuple(self, nextTuple):
@@ -110,12 +148,9 @@ class Vec3(object):
     def multiplyOf(self, mutNumber):
         # type: (int | float) -> Vec3
         """ 向量乘法运算 返回self """
-        self._disableUpdate = True
         self.x *= mutNumber
         self.y *= mutNumber
         self.z *= mutNumber
-        self._disableUpdate = False
-        self._upDate()
         return self
 
     def rotateVector(self, axis, angle):
@@ -132,26 +167,10 @@ class Vec3(object):
         ux, uy, uz = axis.copy().convertToUnitVector()
         vector = self
         # 根据旋转公式计算旋转
-        self._disableUpdate = True
         self.x = (cosTheta + (1 - cosTheta) * ux**2) * vector[0] + ((1 - cosTheta) * ux * uy - sin_theta * uz) * vector[1] + ((1 - cosTheta) * ux * uz + sin_theta * uy) * vector[2]
         self.y = (cosTheta + (1 - cosTheta) * uy**2) * vector[1] + ((1 - cosTheta) * ux * uy + sin_theta * uz) * vector[0] + ((1 - cosTheta) * uy * uz - sin_theta * ux) * vector[2]
         self.z = (cosTheta + (1 - cosTheta) * uz**2) * vector[2] + ((1 - cosTheta) * ux * uz - sin_theta * uy) * vector[0] + ((1 - cosTheta) * uy * uz + sin_theta * ux) * vector[1]
-        self._disableUpdate = False
-        self._upDate()
         return self
-
-    # def rotate(self, axis, angle):
-    #     # type: (Vec3, float) -> Vec3
-    #     angle = math.radians(angle)
-    #     ux, uy, uz = axis.x, axis.y, axis.z
-    #     cos_theta = math.cos(angle)
-    #     sin_theta = math.sin(angle)
-    #     x, y, z = self.x, self.y, self.z
-    #     # Rotation matrix application
-    #     rotated_x = (cos_theta + (1 - cos_theta) * ux * ux) * x + ((1 - cos_theta) * ux * uy - uz * sin_theta) * y + ((1 - cos_theta) * ux * uz + uy * sin_theta) * z
-    #     rotated_y = ((1 - cos_theta) * uy * ux + uz * sin_theta) * x + (cos_theta + (1 - cos_theta) * uy * uy) * y + ((1 - cos_theta) * uy * uz - ux * sin_theta) * z
-    #     rotated_z = ((1 - cos_theta) * uz * ux - uy * sin_theta) * x + ((1 - cos_theta) * uz * uy + ux * sin_theta) * y + (cos_theta + (1 - cos_theta) * uz * uz) * z
-    #     return Vec3(rotated_x, rotated_y, rotated_z)
 
     @staticmethod
     def dot(vc1, vc2):
@@ -165,17 +184,19 @@ class Vec3(object):
         # type: (Vec3) -> float
         """ 向量夹角运算 计算两个向量之间的夹角 """
         dotValue = Vec3.dot(self, otherVec)
-        return math.acos(dotValue) * (180.0 / 3.1415926)
+        length = self.getLength() * otherVec.getLength()
+        if length <= 0.0001:
+            # 未定义行为
+            length = 1.0
+        cosValue = max(min(dotValue / length, 1.0), -1.0)  # 避免浮点误差
+        return math.degrees(math.acos(cosValue))
 
     def scale(self, scalar):  
         # type: (float) -> Vec3
         """ 向量缩放 在当前向量所有轴上乘以一个对应的标量 """
-        self._disableUpdate = True
         self.x *= scalar
         self.y *= scalar
         self.z *= scalar
-        self._disableUpdate = False
-        self._upDate()
         return self
 
     @staticmethod
@@ -326,7 +347,7 @@ class Vec2(Vec3):
         return 2
 
     def _upDate(self):
-        """ 刷新Tuple资源 """
+        """ 更新tuple资源 """
         self._tuple = (self.x, self.y)
 
     @staticmethod
