@@ -105,7 +105,7 @@ def testFunc(playerId, ...args):
     pass
 ```
 ### IMP即初始化
-QuMod推崇`import`即初始化的理念，推荐在脚本加载时完成必要的初始化工作。
+QuMod推崇`import`即初始化的理念，推荐在功能模块加载时完成必要的初始化工作。
 
 ### 更多功能
 请参考`QuModLibs`官网文档、讨论群交流，或查看各模块的源代码注释。
