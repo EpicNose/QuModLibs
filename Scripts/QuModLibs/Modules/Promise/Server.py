@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import mod.server.extraServerApi as serverApi
-from ..EventsPool.Server import *
+from ..EventsPool.Server import POOL_ListenForEvent, POOL_UnListenForEvent
 from .Core import *
 lambda: "By Tohru"
 

@@ -77,6 +77,8 @@ class Promise(object):
                 promise()
         except StopIteration:
             pass
+        except Exception as e:
+            raise e
 
     def reject(self, value=None):
         if self.finished:
