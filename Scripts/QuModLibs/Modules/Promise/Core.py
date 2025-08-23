@@ -1,17 +1,18 @@
+# -*- coding: utf-8 -*-
 import types
+lambda: "By Tohru"
 
-
-class Ref(object):
-
+class PromiseRef(object):
     def __init__(self, value):
         self.value = value
 
-
 class Promise(object):
-
+    """
+        Promise类 - 用于处理异步操作
+    """
     def __init__(self, executor):
         self.executor = executor
-        self.service = None
+        self.service = None     # type: types.GeneratorType
         self.finished = False
         self.thenHandler = None
         self.catchHandler = None
@@ -22,10 +23,10 @@ class Promise(object):
 
     @staticmethod
     def all(promises):
-
+        # type: (list[Promise] | tuple[Promise]) -> Promise
         def executor(resolve, reject):
-            total = Ref(len(promises))
-            now = Ref(0)
+            total = PromiseRef(len(promises))
+            now = PromiseRef(0)
 
             def thenHandler(value):
                 now.value += 1
@@ -42,10 +43,10 @@ class Promise(object):
 
     @staticmethod
     def any(promises):
-
+        # type: (list[Promise] | tuple[Promise]) -> Promise
         def executor(resolve, reject):
-            total = Ref(len(promises))
-            now = Ref(0)
+            total = PromiseRef(len(promises))
+            now = PromiseRef(0)
 
             def thenHandler(value):
                 resolve(value)
@@ -93,6 +94,8 @@ class Promise(object):
                 promise()
         except StopIteration:
             pass
+        except Exception as e:
+            raise e
 
     def then(self, handler, link=False):
         self.thenHandler = handler
@@ -106,8 +109,7 @@ class Promise(object):
             return self
         self.executor(self.resolve, self.reject)
 
-
-def Async(business):
+def asyncRunner(business):
     def wrapper(*args, **kwargs):
         result = business(*args, **kwargs)
         if isinstance(result, types.GeneratorType):
@@ -120,8 +122,8 @@ def Async(business):
                 return
             except StopIteration:
                 pass
+            except Exception as e:
+                raise e
         return result
     wrapper.__name__ = business.__name__
     return wrapper
-
-
