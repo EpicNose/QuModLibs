@@ -257,14 +257,26 @@ class QTimeLineSizeTransform(QTimeLineTransform):
 
 class QAnimsControl(QUIControlFuntion):
     """ Qu动画控件资源托管 """
-    class QControlINFO:
+    class QControlINFO(object):
         """ 控件信息 """
-        def __init__(self, _path = ""):
-            self._path = _path
+        def __init__(self, path = ""):
+            self._path = path
             self._basePos = (0, 0)
             """ 初始化的基初POS信息 """
             self._baseScale = (0, 0)
             """ 初始化的基础大小信息 """
+
+        @property
+        def basePos(self):
+            return self._basePos
+
+        @property
+        def baseScale(self):
+            return self._baseScale
+        
+        @property
+        def path(self):
+            return self._path
 
     def __init__(self, uiNode, parentPath):
         QUIControlFuntion.__init__(self, uiNode, parentPath)
@@ -348,37 +360,37 @@ class QAnimsControl(QUIControlFuntion):
         self.changeTransformAnim(animObj)
         return animObj
     
-    def addTransformAnim(self, _transformObj):
+    def addTransformAnim(self, transformObj):
         # type: (QTransform) -> QTransform
         """ 添加变换动画 """
-        _transformObj._uiNodeRef = self._uiNodeRef
-        _transformObj._uiPath = self._parentPath
-        if not _transformObj in self._animSet:
-            self._animSet.add(_transformObj)
-        return _transformObj
+        transformObj._uiNodeRef = self._uiNodeRef
+        transformObj._uiPath = self._parentPath
+        if not transformObj in self._animSet:
+            self._animSet.add(transformObj)
+        return transformObj
     
-    def changeTransformAnim(self, _transformObj):
+    def changeTransformAnim(self, transformObj):
         # type: (QTransform) -> QTransform
         """ 切换变换动画(相比直接播放将会打断已播放的同类动画) """
-        _oldAnim = self.matchTransformWithClass(_transformObj.__class__)
-        if _oldAnim:
-            self.removeTransformAnim(_oldAnim)
-        return self.addTransformAnim(_transformObj)
+        oldAnim = self.matchTransformWithClass(transformObj.__class__)
+        if oldAnim:
+            self.removeTransformAnim(oldAnim)
+        return self.addTransformAnim(transformObj)
 
-    def removeTransformAnim(self, _transformObj):
+    def removeTransformAnim(self, transformObj):
         # type: (QTransform) -> QTransform
         """ 移除变换动画 """
-        _transformObj._uiNodeRef = None
-        _transformObj._uiPath = ""
-        if _transformObj in self._animSet:
-            self._animSet.remove(_transformObj)
+        transformObj._uiNodeRef = None
+        transformObj._uiPath = ""
+        if transformObj in self._animSet:
+            self._animSet.remove(transformObj)
 
-    def update(self, _time = 0.033, forceUpdate = True):
+    def update(self, delayTime = 0.033, forceUpdate = True):
         """ 更新计算 """
         animList = list(self._animSet)
         animList.sort(key=lambda x: x._priority)
         for v in animList:
-            if v.update(_time, forceUpdate=forceUpdate) == -1:
+            if v.update(delayTime, forceUpdate=forceUpdate) == -1:
                 if v in self._animSet:
                     self._animSet.remove(v)
 
@@ -452,13 +464,13 @@ class QAnimManager(QUIAutoControlFuntion, QRAIIDelayed):
                 return True
         return False
 
-    def getControlAnimObj(self, _path=""):
+    def getControlAnimObj(self, path=""):
         # type: (str) -> QAnimsControl
         """ 获取控件动画对象 """
-        if not _path in self._conAnimDict:
+        if not path in self._conAnimDict:
             # 初始化控件对象
-            obj = QAnimsControl.bindControl(self.getUiNode(), _path)
+            obj = QAnimsControl.bindControl(self.getUiNode(), path)
             if not obj.getParentLiveState():
                 raise RuntimeError("无效的控件路径，或控件已销毁")
-            self._conAnimDict[_path] = obj
-        return self._conAnimDict[_path]
+            self._conAnimDict[path] = obj
+        return self._conAnimDict[path]

@@ -213,18 +213,18 @@ def TRY_EXEC_FUN(funObj, *args, **kwargs):
         print("TRY_EXEC发生异常: {}".format(e))
         traceback.print_exc()
 
-def printStack(printNow=True):  
-    # 获取当前的堆栈跟踪
+def traceCallStack(printNow=True):
+    # type: (bool) -> list[str]
+    """ 获取当前的调用栈信息 """
     import traceback
     stackTrace = traceback.extract_stack()
     # 打印堆栈跟踪
     outStr = []
     for args in stackTrace:
         outStr.append("<{}({})> {}".format(args[0], args[1], args[2]))
-    outPut = "\n".join(outStr)
     if printNow:
         print("\n".join(outStr))
-    return outPut
+    return outStr
 
 def getObjectPathName(_callObj = lambda: None):
     # type: (object) -> str
