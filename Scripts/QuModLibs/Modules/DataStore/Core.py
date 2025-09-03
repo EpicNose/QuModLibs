@@ -107,6 +107,7 @@ class BaseAutoStoreCls(BaseStoreCls):
     __IS_CLIENT__ = False
     __ENV_DESTROY_HANDLER__ = False
     __SAVED_FULL_NAME__ = ""
+    __SAVED_MOD_KEY_NAME__ = ""
     __NEED_SAVE__ = False
 
     @classmethod
@@ -182,6 +183,9 @@ class BaseAutoStoreCls(BaseStoreCls):
         if cls.__SAVED_FULL_NAME__:
             # 引用用户自定义fullName
             return cls.__SAVED_FULL_NAME__
+        elif cls.__SAVED_MOD_KEY_NAME__:
+            from ...IN import ModDirName
+            return "{}.{}".format(ModDirName, cls.__SAVED_MOD_KEY_NAME__)
         # 自动生成fullName
         return "{}.{}".format(cls.__module__, cls.__name__)
 

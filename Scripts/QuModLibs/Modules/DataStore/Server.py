@@ -7,7 +7,8 @@ class ServerAutoStoreCls(BaseAutoStoreCls):
 
     # __VERSION__ = 1               # 数据版本(默认1), 与存档版本不符时会自动丢弃数据
     # __AUTO_SAVE_INTERVAL__ = 8.0  # 自动保存间隔(默认8秒)
-    # __SAVED_FULL_NAME__ = ""      # 自定义存档Key(默认自动生成)
+    # __SAVED_FULL_NAME__ = ""      # 自定义完整Key(默认自动生成)
+    # __SAVED_MOD_KEY_NAME__ = ""   # 自定义ModKey(自动添加mod名隔离)
 
     @classmethod
     def mLoadUserData(cls):
