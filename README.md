@@ -10,6 +10,7 @@
     - EasyScreenNodeCls列为废弃清单(NX15中彻底删除)
     - ItemService现在是单独的模块(Items)不再是Services的子集
     - QAnimManager新增bindRAIINode 自适应绑定方案
+    - 新增DataStore模块 全新的数据存储管理方案
     - 调整QuModLibs内部所有相对导入部分，更加标准化
     - Tools/QuModPurge.exe工具支持新版本同时兼容NX13
     - 摄像机运镜系统支持z轴，并调整了局部实现

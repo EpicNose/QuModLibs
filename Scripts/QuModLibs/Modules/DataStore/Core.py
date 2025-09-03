@@ -6,12 +6,20 @@ class BaseClsStoreMeta(type):
     数据管理元类
     """
     def __setattr__(cls, name, value):
-        # type: (str, object) -> None
         if issubclass(cls, BaseStoreCls):
-            if not cls.__mInit__:
-                cls.__mInit__ = True
-                cls.mLoadUserData()
-            cls.mSignNeedUpdate()
+            if not type.__getattribute__(cls, "__mInit__"):
+                type.__setattr__(cls, "__mInit__", True)
+                type.__setattr__(cls, name, value)
+                type.__getattribute__(cls, "mLoadUserData")()
+            oldValue = None
+            try:
+                oldValue = type.__getattribute__(cls, name)
+            except AttributeError:
+                pass
+            if oldValue != value:
+                type.__setattr__(cls, name, value)
+                cls.mSignNeedUpdate()
+                return
         return type.__setattr__(cls, name, value)
     
     def __getattribute__(cls, name):
@@ -139,11 +147,11 @@ class BaseAutoStoreCls(BaseStoreCls):
         if cls.__IS_CLIENT__:
             import mod.client.extraClientApi as clientApi
             comp = clientApi.GetEngineCompFactory().CreateGame(clientApi.GetLevelId())
-            comp.AddTimer(cls.__AUTO_SAVE_INTERVAL__, lambda: cls.mSaveUserData())
+            comp.AddTimer(cls.__AUTO_SAVE_INTERVAL__, cls.mSaveUserData)
         else:
             import mod.server.extraServerApi as serverApi
             comp = serverApi.GetEngineCompFactory().CreateGame(serverApi.GetLevelId())
-            comp.AddTimer(cls.__AUTO_SAVE_INTERVAL__, lambda: cls.mSaveUserData())
+            comp.AddTimer(cls.__AUTO_SAVE_INTERVAL__, cls.mSaveUserData)
 
     @classmethod
     def mSaveUserData(cls):
