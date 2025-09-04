@@ -17,7 +17,7 @@ class ClientAutoStoreCls(BaseAutoStoreCls):
         configClient = clientApi.GetEngineCompFactory().CreateConfigClient(clientApi.GetLevelId())
         savedData = configClient.GetConfigData(cls.mGetSavedFullName(), cls.__GLOBAL_MODE__)
         for k, v in cls.mUnpackClsDatas(savedData).items():
-            setattr(cls, k, v)
+            type.__setattr__(cls, k, v)
 
     @classmethod
     def _mSaveUserData(cls):
@@ -34,4 +34,4 @@ class ClientAutoStoreCls(BaseAutoStoreCls):
             return
         savedData = data["__data__"]    # type: dict
         for k, v in savedData.items():
-            setattr(cls, k, v)
+            type.__setattr__(cls, k, v)

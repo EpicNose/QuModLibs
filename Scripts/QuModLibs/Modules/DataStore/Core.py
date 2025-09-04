@@ -6,10 +6,10 @@ class BaseClsStoreMeta(type):
     数据管理元类
     """
     def __setattr__(cls, name, value):
-        if issubclass(cls, BaseStoreCls):
+        # type: (str, object) -> None
+        if issubclass(cls, BaseStoreCls) and not name.startswith("__"):
             if not type.__getattribute__(cls, "__mInit__"):
                 type.__setattr__(cls, "__mInit__", True)
-                type.__setattr__(cls, name, value)
                 type.__getattribute__(cls, "mLoadUserData")()
             oldValue = None
             try:
@@ -18,7 +18,8 @@ class BaseClsStoreMeta(type):
                 pass
             if oldValue != value:
                 type.__setattr__(cls, name, value)
-                cls.mSignNeedUpdate()
+                # cls.mSignNeedUpdate()
+                type.__getattribute__(cls, "mSignNeedUpdate")()
                 return
         return type.__setattr__(cls, name, value)
     
@@ -72,7 +73,7 @@ def PACK_DATAS(datas):
         if k.startswith("__"):
             continue
         # 针对基础类型进行优化存储
-        if isinstance(v, (int, float, str, bool)):
+        if isinstance(v, (int, float, str, bool)) or v is None:
             packed[k] = v
         else:
             packed[k] = {"p": pickle.dumps(v)}

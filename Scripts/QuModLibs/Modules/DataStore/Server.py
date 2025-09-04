@@ -15,7 +15,7 @@ class ServerAutoStoreCls(BaseAutoStoreCls):
         extraData = serverApi.GetEngineCompFactory().CreateExtraData(serverApi.GetLevelId())
         savedData = extraData.GetExtraData(cls.mGetSavedFullName())
         for k, v in cls.mUnpackClsDatas(savedData).items():
-            setattr(cls, k, v)
+            type.__setattr__(cls, k, v)
 
     @classmethod
     def _mSaveUserData(cls):
@@ -32,7 +32,7 @@ class ServerAutoStoreCls(BaseAutoStoreCls):
             return
         savedData = data["__data__"]    # type: dict
         for k, v in savedData.items():
-            setattr(cls, k, v)
+            type.__setattr__(cls, k, v)
     
 from ....QuModLibs.Server import QuDataStorage
 
