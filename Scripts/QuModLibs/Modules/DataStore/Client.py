@@ -34,4 +34,4 @@ class ClientAutoStoreCls(BaseAutoStoreCls):
             return
         savedData = data["__data__"]    # type: dict
         for k, v in savedData.items():
-            type.__setattr__(cls, k, v)
+            setattr(cls, k, v)

@@ -32,14 +32,4 @@ class ServerAutoStoreCls(BaseAutoStoreCls):
             return
         savedData = data["__data__"]    # type: dict
         for k, v in savedData.items():
-            type.__setattr__(cls, k, v)
-    
-from ....QuModLibs.Server import QuDataStorage
-
-@QuDataStorage.AutoSave(1)
-class DataStore:
-    VAR1 = 123
-    VAR2 = "Hello"
-
-class NewDataStore(DataStore):
-    pass
+            setattr(cls, k, v)
