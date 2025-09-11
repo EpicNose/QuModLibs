@@ -29,7 +29,7 @@ class CameraData:
             self.rotZ = rot[2]
     
     def __str__(self):
-        return "<CameraData.{}: {} {} {}>".format(id(self), (self.x, self.y, self.z), (self.rotX, self.rotY, self.rotZ))
+        return "<CameraData.{}: {} {}>".format(id(self), (self.x, self.y, self.z), (self.rotX, self.rotY, self.rotZ))
 
 class LensPlayer:
     """ 镜头播放器 """
