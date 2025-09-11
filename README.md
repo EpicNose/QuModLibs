@@ -2,7 +2,7 @@
 适用于网易MC_MOD开发的免费开源框架 (如需摘录部分源代码到其他同类别项目请署名原作者)。
 > 交流反馈群: Q494731530
 
-#### NX14变动内容(08/24)
+#### NX14变动内容(2025/08/24)
     - 移除过时的NX12兼容模块
     - 移除过时的CTRender扩展
     - 移除UIManager现推荐直接使用push界面管理
@@ -59,7 +59,7 @@ def OnScriptTickServer(_={}):
 @Listen("OnCarriedNewItemChangedServerEvent")
 def OnCarriedNewItemChangedServerEvent(args={}):
     # type: (dict) -> None
-    playerId = args['playerId'] # 触发事件的玩家
+    playerId = args["playerId"] # 触发事件的玩家
     comp = serverApi.GetEngineCompFactory().CreateCommand(levelId)
     comp.SetCommand("/say 我切换了手持物品", playerId)
 
