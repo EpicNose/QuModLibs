@@ -11,7 +11,6 @@ class ClientAutoStoreCls(BaseAutoStoreCls):
     # __SAVED_FULL_NAME__ = ""      # 自定义完整Key(默认自动生成)
     # __SAVED_MOD_KEY_NAME__ = ""   # 自定义ModKey(自动添加mod名隔离)
 
-
     @classmethod
     def mLoadUserData(cls):
         configClient = clientApi.GetEngineCompFactory().CreateConfigClient(clientApi.GetLevelId())
