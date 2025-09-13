@@ -18,7 +18,7 @@
     - Tools/QuModPurge.exe工具支持新版本同时兼容NX13
     - 摄像机运镜系统支持z轴，并调整了局部实现
     - 调整Vec3的实现，延迟评估不可变tuple的构造
-    - Mini版本QuModLibs核心更新至v1.4.0
+    - Mini版本QuModLibs核心更新至v1.4.X
     - 合并Promise功能至当前版本
     - 其他若干小的调整和修复
 
