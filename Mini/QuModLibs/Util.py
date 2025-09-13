@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
-from threading import Thread
-from .Information import Version
 from time import time
 import pickle as _pickle
 
@@ -28,8 +26,6 @@ class EventsRedirect(object):
     """ 事件重定向 """
     def __getattribute__(self, __name):
         return type(__name, (EventsData,), {})
-    
-_eventsRedirect = EventsRedirect()
 
 class SystemSide(object):
     def __init__(self, Path, SystemName = None):
@@ -162,19 +158,6 @@ def ExceptionHandling(errorFun=lambda: None, output=False):
         return newFun
     return exceptionHandling
 
-def IsThread(func):
-    """ [装饰器] 是多线程的 @IsThread 使得该函数在独立新线程工作 """
-    @wraps(func)
-    def newFun(*args, **kwargs):
-        xc = Thread(
-            target=func,
-            args=tuple(args),
-            kwargs=dict(kwargs)
-        )
-        xc.start()
-        return xc
-    return newFun
-
 def InitOperation(fun):
     """ 初始化运行 装饰器 @InitOperation 函数将会自动执行一次 不支持传参 """
     try:
@@ -203,93 +186,6 @@ class Math:
             return vector
         unitVector = tuple((i / length) for i in vector)
         return unitVector
-
-class ObjectConversion:
-    """ 对象转换工具类 By Zero123
-        此工具类用于旧版本中解决自定义数据对象的序列化与反序列化加载 用于持久化储存数据/传输数据
-        新版本推荐使用pickle模块
-    """
-
-    baseType = set([
-        "str", "list", "float", "int", "bool", "dict", "unicode"
-    ])
-
-    _typeKey = "__type__"
-    _valueKey = "__value__"
-
-    @staticmethod
-    def getClsPathWithClass(clsObj):
-        return clsObj.__module__ + "." + clsObj.__name__
-
-    @staticmethod
-    def getClsWithPath(path):
-        # type: (str) -> object
-        lastPos = path.rfind(".")
-        impObj = Unknown
-        return getattr(impObj, path[lastPos+1:])
-
-    @staticmethod
-    def getClsPath(data):
-        return data.__class__.__module__ + "." + data.__class__.__name__
-
-    @staticmethod
-    def dumpsObject(data):
-        # type: (object) -> dict
-        """ 序列化对象 """
-        if data == None:
-            return data
-        elif type(data).__name__ in ObjectConversion.baseType:
-            if isinstance(data, list):
-                return [ObjectConversion.dumpsObject(v) for v in data]
-            elif isinstance(data, dict):
-                return {str(k):ObjectConversion.dumpsObject(v) for k, v in data.items()}
-            return data
-        value = {
-            k: ObjectConversion.dumpsObject(getattr(data, k))
-            for k in dir(data) if not k.startswith("__") and not hasattr(getattr(data, k), "__call__") and not isinstance(getattr(data, k), type)
-        }
-        return {
-            ObjectConversion._typeKey: ObjectConversion.getClsPath(data),
-            ObjectConversion._valueKey: value
-        }
-
-    @staticmethod
-    def getType(data):
-        # type: (object) -> str | None
-        if data == None:
-            return None
-        if isinstance(data, dict) and ObjectConversion._typeKey in data and ObjectConversion._valueKey in data:
-            return data[ObjectConversion._typeKey]
-        return type(data).__name__
-
-    @classmethod
-    def loadDumpsObject(cls, data):
-        # type: (object) -> object | dict
-        """ 加载序列化对象 (当类匹配失败/构造失败将会抛出异常) """
-        dataType = cls.getType(data)
-        if dataType == None:
-            return None
-        if dataType in cls.baseType:
-            # 原生数据类型
-            if isinstance(data, list):
-                return [cls.loadDumpsObject(v) for v in data]
-            elif isinstance(data, dict):
-                return {str(k):cls.loadDumpsObject(v) for k, v in data.items()}
-            return data
-        dataCls = cls.getClsWithPath(data[cls._typeKey])
-        value = data[cls._valueKey]
-        createKey = "create"
-        if hasattr(dataCls, createKey):
-            # 使用静态构造方法
-            obj = getattr(dataCls, createKey)()
-            for k, v in cls.loadDumpsObject(value).items():
-                setattr(obj, k, v)
-            return obj
-        return dataCls(**cls.loadDumpsObject(value))
-
-class QuFreeObject(object):
-    def free(self):
-        pass
 
 def errorPrint(charPtr):
     """ 异常输出 """

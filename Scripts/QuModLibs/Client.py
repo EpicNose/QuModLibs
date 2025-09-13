@@ -33,16 +33,16 @@ def regModLoadFinishHandler(func):
 def creatTemporaryContainer():
     return type("TemporaryContainer",(object,),{})()
 
-def _getLoaderSystem():
+def getLoaderSystem():
     """ 获取加载器系统 """
     from .Systems.Loader.Client import LoaderSystem
     return LoaderSystem.getSystem()
 
-_loaderSystem = _getLoaderSystem()
+_loaderSystem = getLoaderSystem()
 
 def Request(key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
     # type: (str, tuple, dict, object) -> bool
-    """ (未来可能移除 推荐使用服务类的安全请求机制)Request 向服务端发送请求, 与Call不同的是,这是双向的,可以取得返回值 """
+    """ Request 向服务端发送请求, 与Call不同的是, 这是双向的, 可以取得返回值 """
     from .Util import RandomUid
     backKey = RandomUid()
     def _backFun(*_args, **_kwargs):

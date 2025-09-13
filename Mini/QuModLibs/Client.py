@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
 # 客户端端基本功能模块 为减缓IO开销 常用的功能均放置在该文件 其他功能按需导入使用
 from .Math import Vec3, Vec2, QBox3D
-from .Util import (
-    Unknown,
-    InitOperation,
-    errorPrint,
-    _eventsRedirect,
-    ObjectConversion as __ObjectConversion
-)
 import mod.client.extraClientApi as clientApi
 from . import IN as __IN
 from .IN import ModDirName
+
 IsServerUser = __IN.IsServerUser
 """ 客户端常量_是否为房主 """
 TickEvent = "OnScriptTickClient"
 System = clientApi.GetSystem("Minecraft", "game")
 levelId = clientApi.GetLevelId()
 playerId = clientApi.GetLocalPlayerId() 
-Events = _eventsRedirect
 
 def regModLoadFinishHandler(func):
     """ 注册Mod加载完毕后触发的Handler """
@@ -28,16 +21,16 @@ def regModLoadFinishHandler(func):
 def creatTemporaryContainer():
     return type("TemporaryContainer",(object,),{})()
 
-def _getLoaderSystem():
+def getLoaderSystem():
     """ 获取加载器系统 """
     from .Systems.Loader.Client import LoaderSystem
     return LoaderSystem.getSystem()
 
-_loaderSystem = _getLoaderSystem()
+_loaderSystem = getLoaderSystem()
 
 def Request(key, args=tuple(), kwargs={}, onResponse=lambda *_: None):
     # type: (str, tuple, dict, object) -> bool
-    """ (未来可能移除 推荐使用服务类的安全请求机制)Request 向服务端发送请求, 与Call不同的是,这是双向的,可以取得返回值 """
+    """ Request 向服务端发送请求, 与Call不同的是, 这是双向的, 可以取得返回值 """
     from .Util import RandomUid
     backKey = RandomUid()
     def _backFun(*_args, **_kwargs):
@@ -300,91 +293,3 @@ class Entity(object):
         """ 设置实体Query节点 仅支持自定义Query """
         comp = clientApi.GetEngineCompFactory().CreateQueryVariable(self.entityId)
         return comp.Set(Query, Value)
-
-# ======= QuMod提供的一些基于原版API的组件 =======
-
-class QuObjectConversion(__ObjectConversion):
-    @staticmethod
-    def getClsWithPath(path):
-        # type: (str) -> object
-        lastPos = path.rfind(".")
-        impObj = clientApi.ImportModule((path[:lastPos]))
-        return getattr(impObj, path[lastPos+1:])
-
-class QuDataStorage:
-    """ Qu数据储存管理 """
-    _versionKey = "__version__"
-    _dataKey = "__data__"
-    _isGlobal = "__isGlobal__"
-    _autoMap = {}   # type: dict[type, dict]
-    _init = False
-
-    @staticmethod
-    def formatStrType(typ):
-        # type: (str) -> str
-        """ 格式化字符串类型 """
-        if typ in ("float", "int"):
-            return "number"
-        elif typ in ("str", "unicode"):
-            return "baseString"
-        return typ
-
-    @staticmethod
-    def loadData(clsObj, data):
-        # type: (type, dict) -> None
-        """ 加载数据 """
-        for k, v in data.items():
-            try:
-                newObj = QuObjectConversion.loadDumpsObject(v)
-                oldType = QuDataStorage.formatStrType(QuObjectConversion.getType(getattr(clsObj, k)))
-                newType = QuDataStorage.formatStrType(QuObjectConversion.getType(newObj))
-                if oldType != newType:
-                    print("[QuDataStorage] 新旧数据类型不一已被放弃 ('{}' != '{}')".format(newType, oldType))
-                    continue
-                setattr(clsObj, k, newObj)
-            except Exception as e:
-                print(e)
-    
-    @staticmethod
-    def dumpsData(clsObj):
-        # type: (type) -> dict
-        """ 获取序列化数据 """
-        return {
-            k : QuObjectConversion.dumpsObject(getattr(clsObj, k)) for k in dir(clsObj) if not k.startswith("__")
-        }
-
-    @staticmethod
-    def AutoSave(version = 1, isGlobal = False):
-        """ 自动保存装饰器
-            @version 版本控制 当版本号不同时将会抛弃当前存档数据该用新版数据 一般用于大型数据变动
-            @isGlobal 是否为全局配置 False视为仅当前存档
-        """
-        if not QuDataStorage._init:
-            QuDataStorage._init = True
-            _loaderSystem._onDestroyCall_LAST.append(QuDataStorage.saveData)
-        def _autoSave(cls):
-            path = QuObjectConversion.getClsPathWithClass(cls)
-            comp = clientApi.GetEngineCompFactory().CreateConfigClient(clientApi.GetLevelId())
-            configDict = comp.GetConfigData(path, isGlobal)
-            if configDict == None:
-                configDict = {}
-            if configDict.get(QuDataStorage._versionKey, version) == version:
-                QuDataStorage.loadData(cls, configDict.get(QuDataStorage._dataKey, {}))
-            configDict[QuDataStorage._versionKey] = version
-            configDict[QuDataStorage._isGlobal] = isGlobal
-            if not path in QuDataStorage._autoMap:
-                QuDataStorage._autoMap[path] = configDict
-            return cls
-        return _autoSave
-    
-    @staticmethod
-    def saveData():
-        """ 保存存档数据 """
-        levelcomp = clientApi.GetEngineCompFactory().CreateConfigClient(levelId)
-        for k, v in QuDataStorage._autoMap.items():
-            try:
-                cls = QuObjectConversion.getClsWithPath(k)
-                v[QuDataStorage._dataKey] = QuDataStorage.dumpsData(cls)
-                levelcomp.SetConfigData(k, v, v.get(QuDataStorage._isGlobal, False))
-            except Exception as e:
-                print(e)

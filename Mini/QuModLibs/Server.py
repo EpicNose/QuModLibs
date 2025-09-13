@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
 from .Math import Vec3, Vec2, QBox3D
-from .Util import (
-    Unknown,
-    InitOperation,
-    errorPrint,
-    _eventsRedirect,
-    ObjectConversion as __ObjectConversion,
-)
 from .IN import ModDirName
 import mod.server.extraServerApi as serverApi
+
 TickEvent = "OnScriptTickServer"
 levelId = serverApi.GetLevelId()
 System = serverApi.GetSystem("Minecraft", "game")
-Events = _eventsRedirect
 
 def getOwnerPlayerId():
     # type: () -> str | None
@@ -30,12 +23,12 @@ def DestroyEntity(entityId):
     """ 注销特定实体 """
     return System.DestroyEntity(entityId)
 
-def _getLoaderSystem():
+def getLoaderSystem():
     """ 获取加载器系统 """
     from .Systems.Loader.Server import LoaderSystem
     return LoaderSystem.getSystem()
 
-_loaderSystem = _getLoaderSystem()
+_loaderSystem = getLoaderSystem()
 
 def ListenForEvent(eventName, parentObject=None, func=lambda: None):
     # type: (str | object, object, object) -> object
@@ -455,148 +448,3 @@ class Entity(object):
         if playerList:
             return playerList[0]
         return None
-
-class TaskProcessObj(object):
-    def __init__(self, obj, workingHours, waitingTime):
-        # type: (object, float, float) -> None
-        self.obj = obj
-        self.workingHours = workingHours
-        self.waitingTime = waitingTime
-        self._lock = False
-        self.__isWorking = False
-        self.__gen = None
-    
-    def stopTask(self):
-        if not self.__isWorking:
-            return
-        self.__isWorking = False
-    
-    def clone(self):
-        return TaskProcessObj(self.obj, self.workingHours, self.waitingTime)
-    
-    def run(self, *args, **kwargs):
-        if self.__isWorking or self._lock:
-            return
-        self.__gen = self.obj(*args, **kwargs)
-        self.__isWorking = True
-        self._onStart()
-    
-    def _onStart(self):
-        from time import time
-        startTime = time()
-        try:
-            while self.__isWorking:
-                slpTime = next(self.__gen)
-                nowTime = time()
-                if nowTime - self.workingHours >= startTime:
-                    serverApi.GetEngineCompFactory().CreateGame(levelId).AddTimer(self.waitingTime, self._onStart)
-                    break
-                elif slpTime:
-                    serverApi.GetEngineCompFactory().CreateGame(levelId).AddTimer(slpTime, self._onStart)
-                    break
-        except StopIteration:
-            self.stopTask()
-        except Exception as e:
-            print("[Error] {} 任务异常: {}".format(self.obj.__name__, e))
-            self.stopTask()
-
-def TaskProcess(workingHours = 0.02, waitingTime = 0.04):
-    """ 任务进程装饰器 """
-    def _zsq(obj):
-        taskProcessObj = TaskProcessObj(obj, workingHours, waitingTime)
-        taskProcessObj._lock = True
-        return taskProcessObj
-    return _zsq
-
-def TaskProcessCreate(obj):
-    # type: (TaskProcessObj) -> TaskProcessObj
-    """ 创建任务进程 """
-    return obj.clone()
-
-class QuObjectConversion(__ObjectConversion):
-    @staticmethod
-    def getClsWithPath(path):
-        # type: (str) -> object
-        lastPos = path.rfind(".")
-        impObj = serverApi.ImportModule((path[:lastPos]))
-        return getattr(impObj, path[lastPos+1:])
-
-class QuDataStorage:
-    """ Qu数据储存管理 """
-    _versionKey = "__version__"
-    _dataKey = "__data__"
-    _autoMap = {}   # type: dict[type, dict]
-    _init = False
-
-    @staticmethod
-    def formatStrType(typ):
-        # type: (str) -> str
-        """ 格式化字符串类型 """
-        if typ in ("float", "int"):
-            return "number"
-        elif typ in ("str", "unicode"):
-            return "baseString"
-        return typ
-
-    @staticmethod
-    def loadData(clsObj, data):
-        # type: (type, dict) -> None
-        """ 加载数据 """
-        for k, v in data.items():
-            try:
-                newObj = QuObjectConversion.loadDumpsObject(v)
-                oldType = QuDataStorage.formatStrType(QuObjectConversion.getType(getattr(clsObj, k)))
-                newType = QuDataStorage.formatStrType(QuObjectConversion.getType(newObj))
-                if oldType != newType:
-                    print("[QuDataStorage] 新旧数据类型不一已被放弃 ('{}' != '{}')".format(newType, oldType))
-                    continue
-                setattr(clsObj, k, newObj)
-            except Exception as e:
-                print(e)
-    
-    @staticmethod
-    def dumpsData(clsObj):
-        # type: (type) -> dict
-        """ 获取序列化数据 """
-        return {
-            k : QuObjectConversion.dumpsObject(getattr(clsObj, k)) for k in dir(clsObj) if not k.startswith("__")
-        }
-
-    @staticmethod
-    def AutoSave(version = 1):
-        """ 自动保存装饰器
-            @version 版本控制 当版本号不同时将会抛弃当前存档数据该用新版数据 一般用于大型数据变动
-        """
-        if not QuDataStorage._init:
-            QuDataStorage._init = True
-            _loaderSystem._onDestroyCall_LAST.append(QuDataStorage.saveData)
-
-        def _autoSave(cls):
-            path = QuObjectConversion.getClsPathWithClass(cls)
-            comp = serverApi.GetEngineCompFactory().CreateExtraData(levelId)
-            levelExData = comp.GetExtraData(path)
-            if levelExData == None:
-                levelExData = {}
-            if levelExData.get(QuDataStorage._versionKey, version) == version:
-                QuDataStorage.loadData(cls, levelExData.get(QuDataStorage._dataKey, {}))
-            levelExData[QuDataStorage._versionKey] = version
-            if not path in QuDataStorage._autoMap:
-                QuDataStorage._autoMap[path] = levelExData
-            return cls
-        return _autoSave
-    
-    @staticmethod
-    def saveData():
-        """ 保存存档数据 """
-        saveCount = 0
-        levelcomp = serverApi.GetEngineCompFactory().CreateExtraData(levelId)
-        for k, v in QuDataStorage._autoMap.items():
-            saveCount += 1
-            try:
-                cls = QuObjectConversion.getClsWithPath(k)
-                v[QuDataStorage._dataKey] = QuDataStorage.dumpsData(cls)
-                levelcomp.SetExtraData(k, v, False)
-            except Exception as e:
-                print(e)
-        if saveCount > 0:
-            levelcomp.SaveExtraData()

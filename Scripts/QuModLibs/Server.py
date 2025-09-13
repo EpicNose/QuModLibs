@@ -35,12 +35,12 @@ def DestroyEntity(entityId):
     """ 注销特定实体 """
     return System.DestroyEntity(entityId)
 
-def _getLoaderSystem():
+def getLoaderSystem():
     """ 获取加载器系统 """
     from .Systems.Loader.Server import LoaderSystem
     return LoaderSystem.getSystem()
 
-_loaderSystem = _getLoaderSystem()
+_loaderSystem = getLoaderSystem()
 
 def ListenForEvent(eventName, parentObject=None, func=lambda: None):
     # type: (str | object, object, object) -> object
@@ -460,63 +460,6 @@ class Entity(object):
         if playerList:
             return playerList[0]
         return None
-
-class TaskProcessObj(object):
-    def __init__(self, obj, workingHours, waitingTime):
-        # type: (object, float, float) -> None
-        self.obj = obj
-        self.workingHours = workingHours
-        self.waitingTime = waitingTime
-        self._lock = False
-        self.__isWorking = False
-        self.__gen = None
-    
-    def stopTask(self):
-        if not self.__isWorking:
-            return
-        self.__isWorking = False
-    
-    def clone(self):
-        return TaskProcessObj(self.obj, self.workingHours, self.waitingTime)
-    
-    def run(self, *args, **kwargs):
-        if self.__isWorking or self._lock:
-            return
-        self.__gen = self.obj(*args, **kwargs)
-        self.__isWorking = True
-        self._onStart()
-    
-    def _onStart(self):
-        from time import time
-        startTime = time()
-        try:
-            while self.__isWorking:
-                slpTime = next(self.__gen)
-                nowTime = time()
-                if nowTime - self.workingHours >= startTime:
-                    serverApi.GetEngineCompFactory().CreateGame(levelId).AddTimer(self.waitingTime, self._onStart)
-                    break
-                elif slpTime:
-                    serverApi.GetEngineCompFactory().CreateGame(levelId).AddTimer(slpTime, self._onStart)
-                    break
-        except StopIteration:
-            self.stopTask()
-        except Exception as e:
-            print("[Error] {} 任务异常: {}".format(self.obj.__name__, e))
-            self.stopTask()
-
-def TaskProcess(workingHours = 0.02, waitingTime = 0.04):
-    """ 任务进程装饰器 """
-    def _zsq(obj):
-        taskProcessObj = TaskProcessObj(obj, workingHours, waitingTime)
-        taskProcessObj._lock = True
-        return taskProcessObj
-    return _zsq
-
-def TaskProcessCreate(obj):
-    # type: (TaskProcessObj) -> TaskProcessObj
-    """ 创建任务进程 """
-    return obj.clone()
 
 class QuObjectConversion(__ObjectConversion):
     @staticmethod

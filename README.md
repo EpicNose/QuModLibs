@@ -2,10 +2,13 @@
 适用于网易MC_MOD开发的免费开源框架 (如需摘录部分源代码到其他同类别项目请署名原作者)。
 > 交流反馈群: Q494731530
 
-#### NX14变动内容(2025/08/24)
+#### NX14变动内容(2025/09/13)
     - 移除过时的NX12兼容模块
     - 移除过时的CTRender扩展
     - 移除UIManager现推荐直接使用push界面管理
+    - 移除不常用的Task功能
+    - 移除IsThread装饰器，推荐使用线程池模块
+    - getLoaderSystem函数公开访问权限
     - AutoSave列为废弃清单(未来将由其他模块替代)
     - EasyScreenNodeCls列为废弃清单(NX15中彻底删除)
     - ItemService现在是单独的模块(Items)不再是Services的子集
