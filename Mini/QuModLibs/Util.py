@@ -41,6 +41,96 @@ buil = UniversalObject()
 Unknown = type("Unknown",(object,),{})
 # ThreadLock = Lock()
 
+class QRAIIBase:
+    """ QRAII基类 规范基础协议 """
+    def _cleanup(self):
+        pass
+
+class QRAIIDelayed(QRAIIBase):
+    """ 延迟加载资源基类 规范协议 """
+    def _loadResource(self):
+        pass
+
+class QRAIIDelayedFunc(QRAIIDelayed):
+    """ 延迟加载函数资源 """
+    def __init__(self, bindFunc=lambda: None):
+        self.bindFunc = bindFunc
+
+    def _loadResource(self):
+        self.bindFunc()
+
+class QBaseRAIIEnv:
+    def __init__(self):
+        self._raiiResSet = set()    # type: set[QRAIIBase]
+
+    def addRAIIRes(self, res):
+        # type: (QRAIIBase) -> bool
+        """ 添加RAII资源 """
+        if res in self._raiiResSet:
+            return False
+        self._raiiResSet.add(res)
+        return True
+
+    def freeRAIIRes(self, res):
+        # type: (QRAIIBase) -> bool
+        """ 释放RAII资源 """
+        if not res in self._raiiResSet:
+            return False
+        self._raiiResSet.remove(res)
+        res._cleanup()
+        return True
+
+    def freeALLRAIIRes(self):
+        # type: () -> None
+        """ 释放所有RAII资源 """
+        while self._raiiResSet:
+            for res in list(self._raiiResSet):
+                TRY_EXEC_FUN(res._cleanup)
+                self._raiiResSet.discard(res)
+
+    def hasRAIIRes(self, res):
+        # type: (QRAIIBase) -> bool
+        return res in self._raiiResSet
+
+    def getRAIIResSetRef(self):
+        # type: () -> set[QRAIIBase]
+        """ 获取RAII资源集合引用 """
+        return self._raiiResSet
+
+    def getRAIIList(self):
+        # type: () -> list[QRAIIBase]
+        return list(self._raiiResSet)
+
+class QDRAIIEnv(QBaseRAIIEnv):
+    def __init__(self):
+        QBaseRAIIEnv.__init__(self)
+        self._draiiEnvState = False
+
+    def loadDRAIIRes(self, res):
+        # type: (QRAIIDelayed) -> bool
+        """ 加载延迟RAII资源 """
+        if self.hasRAIIRes(res):
+            res._loadResource()
+            return True
+        return False
+
+    def addRAIIRes(self, res):
+        state = QBaseRAIIEnv.addRAIIRes(self, res)
+        if state and self._draiiEnvState:
+            # 如果RAII环境已经初始化 则立即加载资源
+            if isinstance(res, QRAIIDelayed):
+                res._loadResource()
+
+    def setDRAIIEnvState(self, state=True):
+        self._draiiEnvState = state
+
+    def loadALLDRAIIRes(self):
+        # type: () -> None
+        """ 加载所有延迟RAII资源 """
+        for res in list(self._raiiResSet):
+            if isinstance(res, QRAIIDelayed):
+                res._loadResource()
+
 def RandomUid():
     """ 创建随机UID """
     from uuid import uuid4
