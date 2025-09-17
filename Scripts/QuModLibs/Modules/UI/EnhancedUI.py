@@ -179,10 +179,7 @@ class QEControlFuntion(QUIControlFuntion, IBaseQECanvas):
 
     def _cleanup(self):
         QRAIIDelayed._cleanup(self)
-        if self.getUiNode()._raiiCleanState:
-            self.removeControl(True)
-        else:
-            self.removeControl(False)
+        self.removeControl()
 
 def UI_INIT_ERASURE(timelyMode=True):
     """ 用于对UI_ARGS进行擦除 隐式处理参数 """
