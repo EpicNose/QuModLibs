@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ...Client import _getLoaderSystem, ListenForEvent, UnListenForEvent, Events
+from ...Client import getLoaderSystem, ListenForEvent, UnListenForEvent, Events
 from ..EventsPool.Client import POOL_ListenForEvent, POOL_UnListenForEvent
 from ...UI import EasyScreenNodeCls, ScreenNodeWrapper
 from ...Util import QRAIIDelayed, QBaseRAIIEnv, QTemplate
@@ -205,7 +205,7 @@ class QUICanvas:
                 _QGridData.updateRender(uiNode)
         from ...Util import RandomUid
         GridComponentSizeChangedClientEvent.__name__ = RandomUid()
-        _getLoaderSystem().unsafeUpdate(ListenForEvent(QGridData.EVENT_NAME, self, GridComponentSizeChangedClientEvent))
+        getLoaderSystem().unsafeUpdate(ListenForEvent(QGridData.EVENT_NAME, self, GridComponentSizeChangedClientEvent))
         _QGridData._sharedDict["listenFun"] = GridComponentSizeChangedClientEvent
 
     def unListenQGridRender(self, _QGridData):
