@@ -136,6 +136,7 @@ class LoaderSystem(ClientSystem, EasyListener):
             TRY_EXEC_FUN(obj)
         self._onDestroyCall_LAST = []
         RuntimeService._clientStarting = False
+        RuntimeService.delGlobalEnvRef()
 
     def getSystemList(self):
         # type: () -> list[tuple[str, str | None]]
@@ -208,3 +209,4 @@ class LoaderSystem(ClientSystem, EasyListener):
         # 加载Finish事件
         for funcObj in RuntimeService._clientLoadFinish:
             TRY_EXEC_FUN(funcObj)
+        RuntimeService.addGlobalEnvRef()

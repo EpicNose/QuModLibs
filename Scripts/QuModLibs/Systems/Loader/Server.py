@@ -157,7 +157,7 @@ class LoaderSystem(ServerSystem, EasyListener):
         """ 移除销毁触发 """
         if funObj in self._onDestroyCall:
             self._onDestroyCall.remove(funObj)
-    
+
     def Destroy(self):
         # 用户级destroy执行
         for obj in self._onDestroyCall:
@@ -168,6 +168,7 @@ class LoaderSystem(ServerSystem, EasyListener):
             TRY_EXEC_FUN(obj)
         self._onDestroyCall_LAST = []
         RuntimeService._serverStarting = False
+        RuntimeService.delGlobalEnvRef()
 
     def getSystemList(self):
         # type: () -> list[tuple[str, str | None]]
@@ -240,3 +241,4 @@ class LoaderSystem(ServerSystem, EasyListener):
         # 加载Finish事件
         for funcObj in RuntimeService._serverLoadFinish:
             TRY_EXEC_FUN(funcObj)
+        RuntimeService.addGlobalEnvRef()
