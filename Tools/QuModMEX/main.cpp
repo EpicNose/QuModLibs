@@ -7,12 +7,10 @@
 static std::string listToString(const std::vector<std::string>& vc)
 {
 	std::string result = "[";
-	for (const auto& str : vc)
-	{
+	for (const auto& str : vc) {
 		result.append(str+", ");
 	}
-	if(result.size() >= 2)
-	{
+	if(result.size() >= 2) {
 		result.erase(result.end() - 2, result.end());
 	}
 	result.append("]");
@@ -33,8 +31,7 @@ static std::vector<std::string> splitString(const std::string& str)
 	std::vector<std::string> result;
 	std::istringstream iss(str);
 	std::string token;
-	while (iss >> token)
-	{
+	while (iss >> token) {
 		result.push_back(token);
 	}
 	return result;
@@ -62,25 +59,19 @@ static std::vector<std::string> getUserInputArgs()
 // 删除空Python目录
 static void removeNullPythonDirs(const std::filesystem::path& path)
 {
-	if(!std::filesystem::is_directory(path))
-	{
+	if(!std::filesystem::is_directory(path)) {
 		return;
 	}
 	unsigned int count = 0;
-	for (const auto& entry : std::filesystem::directory_iterator(path))
-	{
+	for (const auto& entry : std::filesystem::directory_iterator(path)) {
 		// 忽略 __init__.py 文件
-		if (std::filesystem::is_regular_file(entry) && entry.path().filename() != "__init__.py")
-		{
+		if (std::filesystem::is_regular_file(entry) && entry.path().filename() != "__init__.py") {
 			count++;
-		}
-		else if (std::filesystem::is_directory(entry))
-		{
+		} else if (std::filesystem::is_directory(entry)) {
 			count++;
 		}
 	}
-	if (count == 0)
-	{
+	if (count == 0) {
 		std::cout << "删除空目录: " << path.generic_string() << "\n";
 		std::filesystem::remove_all(path);
 		return;
@@ -91,7 +82,7 @@ static void removeNullPythonDirs(const std::filesystem::path& path)
 static void whiteMode(const std::filesystem::path& quModPath)
 {
 	auto analyzer = QuModMEX::QuModLibsAnalyzer(quModPath);
-	auto manager = QuModMEX::ModuleRelationViewManager{ analyzer.getAllModulesRelationViews() };
+	auto manager = QuModMEX::ModuleRelationViewManager { analyzer.getAllModulesRelationViews() };
 	std::unordered_set<std::string> targets;
 	std::cout << "请输入需要保留的白名单模块(空格分隔): ";
 	auto userArgs = getUserInputArgs();
@@ -102,16 +93,13 @@ static void whiteMode(const std::filesystem::path& quModPath)
 	std::cout << "根据分析，可安全移除（按下回车执行）: " << listToString(canRemove) << "\n";
 	system("pause");
 	auto mPath = quModPath / "Modules";
-	for (const auto& m : canRemove)
-	{
+	for (const auto& m : canRemove) {
 		auto path = mPath / m;
-		if (std::filesystem::exists(path))
-		{
+		if (std::filesystem::exists(path)) {
 			std::cout << "删除模块: " << path.generic_string() << "\n";
 			std::filesystem::remove_all(path);
 		}
-		else
-		{
+		else {
 			std::cout << "模块不存在: " << path.generic_string() << "\n";
 		}
 	}
@@ -131,21 +119,16 @@ static void blackMode(const std::filesystem::path& quModPath)
 	std::cout << "移除目标: " << listToString(targets) << "\n";
 	// 反向白名单生成
 	std::unordered_set<std::string> targets2;
-	for (const auto& [name, _] : manager.getViewDatas())
-	{
-		if(targets.find(name) == targets.end())
-		{
+	for (const auto& [name, _] : manager.getViewDatas()) {
+		if(targets.find(name) == targets.end()) {
 			targets2.insert(name);
 		}
 	}
 	auto canRemove = manager.getRemoveUnwantedModules(targets2);
-	if (canRemove.empty())
-	{
+	if (canRemove.empty()) {
 		std::cout << "\n根据分析，没有相关可安全移除的模块。\n";
-		for (auto& view : mRv)
-		{
-			if (targets.find(view.getName()) != targets.end())
-			{
+		for (auto& view : mRv) {
+			if (targets.find(view.getName()) != targets.end()) {
 				std::cout << view.getName() << " 被" << view.getRefedCount() << "个模块引用。\n";
 				std::cout << "以下模块依赖: " << listToString(view.getRefedModules()) << "\n";
 				std::cout << "\n";
@@ -156,16 +139,13 @@ static void blackMode(const std::filesystem::path& quModPath)
 	std::cout << "根据分析，可安全移除（按下回车执行）: " << listToString(canRemove) << "\n";
 	system("pause");
 	auto mPath = quModPath / "Modules";
-	for (const auto& m : canRemove)
-	{
+	for (const auto& m : canRemove) {
 		auto path = mPath / m;
-		if (std::filesystem::exists(path))
-		{
+		if (std::filesystem::exists(path)) {
 			std::cout << "删除模块: " << path.generic_string() << "\n";
 			std::filesystem::remove_all(path);
 		}
-		else
-		{
+		else {
 			std::cout << "模块不存在: " << path.generic_string() << "\n";
 		}
 	}
@@ -177,8 +157,7 @@ static void onlyListMode(const std::filesystem::path& quModPath)
 {
 	auto analyzer = QuModMEX::QuModLibsAnalyzer(quModPath);
 	auto relationViews = analyzer.getAllModulesRelationViews();
-	for (auto& view : relationViews)
-	{
+	for (auto& view : relationViews) {
 		std::cout << view.getName() << " 共引用" << view.getRefCount() << "个模块，被" << view.getRefedCount() << "个模块引用。\n";
 		std::cout << "引用: " << listToString(view.getRefModules()) << "\n";
 		std::cout << "被引用: " << listToString(view.getRefedModules()) << "\n";
@@ -213,26 +192,21 @@ QuModMEX使用说明：
 	std::cout << "请输入处理策略(0/1/2): ";
 	std::vector<std::string> modeArgs = getUserInputArgs();
 	std::cout << "\n";
-	if (modeArgs.size() != 1)
-	{
+	if (modeArgs.size() != 1) {
 		std::cout << "输入参数错误，请检查输入格式。\n";
 		system("pause");
 		return 0;
 	}
-	if (modeArgs[0] == "0")
-	{
+	if (modeArgs[0] == "0") {
 		whiteMode(targetPath);
 	}
-	else if (modeArgs[0] == "1")
-	{
+	else if (modeArgs[0] == "1") {
 		blackMode(targetPath);
 	}
-	else if (modeArgs[0] == "2")
-	{
+	else if (modeArgs[0] == "2") {
 		onlyListMode(targetPath);
 	}
-	else
-	{
+	else {
 		std::cout << "不支持的策略模式：" << modeArgs[0] << "\n";
 	}
 	system("pause");
