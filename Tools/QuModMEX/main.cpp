@@ -1,4 +1,9 @@
 ﻿#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <vector>
+#include <unordered_set>
+#include <regex>
 #include "utils/EnvEncode.h"
 #include "QuModMEX.h"
 // By Zero123
@@ -79,15 +84,10 @@ static void removeNullPythonDirs(const std::filesystem::path& path)
 }
 
 // 白名单处理模式
-static void whiteMode(const std::filesystem::path& quModPath)
+static void whiteMode(const std::filesystem::path& quModPath, const std::unordered_set<std::string>& targets)
 {
 	auto analyzer = QuModMEX::QuModLibsAnalyzer(quModPath);
 	auto manager = QuModMEX::ModuleRelationViewManager { analyzer.getAllModulesRelationViews() };
-	std::unordered_set<std::string> targets;
-	std::cout << "请输入需要保留的白名单模块(空格分隔): ";
-	auto userArgs = getUserInputArgs();
-	std::cout << "\n";
-	targets = std::unordered_set<std::string>(userArgs.begin(), userArgs.end());
 	std::cout << "保留目标: " << listToString(targets) << "\n";
 	auto canRemove = manager.getRemoveUnwantedModules(targets);
 	std::cout << "根据分析，可安全移除（按下回车执行）: " << listToString(canRemove) << "\n";
@@ -104,6 +104,16 @@ static void whiteMode(const std::filesystem::path& quModPath)
 		}
 	}
 	removeNullPythonDirs(mPath);
+}
+
+// 白名单处理模式
+static void whiteMode(const std::filesystem::path& quModPath)
+{
+	std::cout << "请输入需要保留的白名单模块(空格分隔): ";
+	auto userArgs = getUserInputArgs();
+	std::cout << "\n";
+	std::unordered_set<std::string> targets(userArgs.begin(), userArgs.end());
+	whiteMode(quModPath, targets);
 }
 
 // 黑名单处理模式
@@ -165,6 +175,78 @@ static void onlyListMode(const std::filesystem::path& quModPath)
 	}
 }
 
+static void _testExtractImportedModules(const std::filesystem::path& path, std::unordered_set<std::string>& modules)
+{
+	// 递归遍历文件/文件夹并排除QuModLibs目录
+	for(const auto& entry : std::filesystem::directory_iterator(path))
+	{
+		if(entry.is_directory()) {
+			// 排除 QuModLibs 目录
+			if(entry.path().filename() == "QuModLibs") {
+				continue;
+			}
+			_testExtractImportedModules(entry.path(), modules);
+		}
+		else if(entry.is_regular_file() && entry.path().extension() == ".py") {
+			std::string code;
+			std::ifstream file(entry.path(), std::ios::binary);
+			if (file) {
+				std::ostringstream ss;
+				ss << file.rdbuf();
+				code = ss.str();
+			}
+			else {
+				std::cout << "无法打开文件: " << entry.path().generic_string() << "\n";
+				continue;
+			}
+			auto imported = QuModMEX::extractImportedModules(code);
+			for(const auto& m : imported) {
+				modules.insert(m);
+			}
+		}
+	}
+}
+
+// 计算MOD中QuModLibs模块引用列表
+static std::vector<std::string> testExtractImportedModules(const std::filesystem::path& quModPath)
+{
+	std::unordered_set<std::string> allModules;
+	std::unordered_set<std::string> modules;
+	// 从 QuModLibs上级目录开始搜索
+	_testExtractImportedModules(quModPath.parent_path(), allModules);
+	if(std::filesystem::exists(quModPath / "Include")) {
+		modules.insert("Services");	// Include扩展必须包含Services模块
+	}
+	// 解析 QuModLibs.Modules.{}.* 字段
+	static std::regex moduleRegex(R"((?:^|\.)QuModLibs\.Modules\.([A-Za-z0-9_]+)(?:\.|$))");
+	for (const auto& quModule : allModules) {
+		std::smatch match;
+		if (std::regex_search(quModule, match, moduleRegex)) {
+			if (match.size() > 1) {
+				modules.insert(match[1].str());
+			}
+		}
+	}
+	return std::vector<std::string>(modules.begin(), modules.end());
+}
+
+// 用户列出当前项目引用列表
+static void testListCurrentProjectRefs(const std::filesystem::path& quModPath)
+{
+	auto refs = testExtractImportedModules(quModPath);
+	std::cout << "项目路径: " << quModPath.parent_path().generic_string() << "\n";
+	std::cout << "引用模块: " << listToString(refs) << "\n";
+}
+
+// 用户自动分析移除无关项目的模块
+// 不支持反射/跨包等不可见引用
+static void testAutoRemoveUnrelatedModules(const std::filesystem::path& quModPath)
+{
+	auto refs = testExtractImportedModules(quModPath);
+	std::unordered_set<std::string> targets(refs.begin(), refs.end());
+	whiteMode(quModPath, targets);
+}
+
 int main()
 {
 	Encoding::initEnvcode();
@@ -175,6 +257,8 @@ QuModMEX使用说明：
   0. 白名单模式，保留特定模块及其依赖
   1. 黑名单模式，移除特定模块（依赖检查）
   2. 仅列出依赖关系，不作其他处理
+  3. 自动分析移除无关项目的模块（不支持反射/跨包等不可见引用）
+  4. 仅列出当前项目的引用模块（限制条件与3相同）
 - 若需要移除补全库，另见：QuModPurge.exe
 - 特殊: Include扩展无互相依赖关系，若无需求可直接删除
 ---------------------------------------------------
@@ -189,7 +273,7 @@ QuModMEX使用说明：
 		system("pause");
 		return 0;
 	}
-	std::cout << "请输入处理策略(0/1/2): ";
+	std::cout << "请输入处理策略(0/1/2/3/4): ";
 	std::vector<std::string> modeArgs = getUserInputArgs();
 	std::cout << "\n";
 	if (modeArgs.size() != 1) {
@@ -205,6 +289,12 @@ QuModMEX使用说明：
 	}
 	else if (modeArgs[0] == "2") {
 		onlyListMode(targetPath);
+	}
+	else if(modeArgs[0] == "3") {
+		testAutoRemoveUnrelatedModules(targetPath);
+	}
+	else if(modeArgs[0] == "4") {
+		testListCurrentProjectRefs(targetPath);
 	}
 	else {
 		std::cout << "不支持的策略模式：" << modeArgs[0] << "\n";
