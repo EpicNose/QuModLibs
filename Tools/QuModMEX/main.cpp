@@ -250,7 +250,7 @@ static void testAutoRemoveUnrelatedModules(const std::filesystem::path& quModPat
 int main()
 {
 	Encoding::initEnvcode();
-	std::cout << R"(---------------------------------------------------
+	std::cout << R"(------------------------------------------------------
 QuModMEX使用说明：
 - 该项目用于分析依赖并剔除无用QuModLibs模块
 - 提供两种剔除模式:
@@ -261,7 +261,7 @@ QuModMEX使用说明：
   4. 仅列出当前项目的引用模块（限制条件与3相同）
 - 若需要移除补全库，另见：QuModPurge.exe
 - 特殊: Include扩展无互相依赖关系，若无需求可直接删除
----------------------------------------------------
+------------------------------------------------------
 )";
 	std::filesystem::path targetPath;
 	std::cout << "\n请输入目标路径(QuModLibs): ";
