@@ -161,7 +161,7 @@ static std::string generateManifest(
     return generateManifest(type, name, uuid1, uuid2, description);
 }
 
-static std::string makeAddonFolderName(std::string_view uuid) {
+static std::string makeAddonFolderName(std::string_view uuid, char suffix) {
     std::string folderName;
     folderName.reserve(uuid.size());
 
@@ -178,16 +178,18 @@ static std::string makeAddonFolderName(std::string_view uuid) {
     }
 
     folderName.front() = 'A';
+    folderName.back() = static_cast<char>(std::toupper(static_cast<unsigned char>(suffix)));
     return folderName;
 }
 
 static ManifestArtifact generateManifestArtifact(
     std::string_view type,
-    std::string_view description) {
+    std::string_view description,
+    char folderSuffix) {
     ManifestArtifact artifact;
     artifact.headerUuid = generateUuidV4();
     artifact.moduleUuid = generateUuidV4();
-    artifact.folderName = makeAddonFolderName(artifact.headerUuid);
+    artifact.folderName = makeAddonFolderName(artifact.headerUuid, folderSuffix);
     artifact.content = generateManifest(
         type,
         artifact.folderName,
@@ -318,10 +320,12 @@ int main() {
     } else {
         const auto behaviorPack = generateManifestArtifact(
             "data",
-            "Auto generated behavior pack");
+            "Auto generated behavior pack",
+            'B');
         const auto resourcePack = generateManifestArtifact(
             "resources",
-            "Auto generated resource pack");
+            "Auto generated resource pack",
+            'R');
 
         std::string behaviorManifestPath;
         std::string resourceManifestPath;
