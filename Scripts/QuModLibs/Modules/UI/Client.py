@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ...Client import getLoaderSystem, ListenForEvent, UnListenForEvent, Events
 from ..EventsPool.Client import POOL_ListenForEvent, POOL_UnListenForEvent
-from ...UI import EasyScreenNodeCls, ScreenNodeWrapper
+from ...UI import ScreenNodeWrapper
 from ...Util import QRAIIDelayed, QBaseRAIIEnv, QTemplate
 import weakref
 lambda: "UI扩展功能 By Zero123"
@@ -39,7 +39,7 @@ class QGridData:
         return self
 
     def getRealPath(self, uiNode):
-        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> str
+        # type: (ScreenNodeWrapper) -> str
         """ 获取真实路径 """
         if self.isScrollGrid:
             # 对于网格列表则获取一下实时渲染路径
@@ -47,7 +47,7 @@ class QGridData:
         return self.path
 
     def getRealComponentPath(self, uiNode):
-        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> str
+        # type: (ScreenNodeWrapper) -> str
         componentPath = str(getattr(uiNode, "component_path"))
         return componentPath + self.getRealPath(uiNode)
     
@@ -78,7 +78,7 @@ class QGridData:
         self._lastRenderCacheSet.clear()
 
     def updateRender(self, uiNode):
-        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> None
+        # type: (ScreenNodeWrapper) -> None
         """ 刷新渲染 """
         self.bindUpdateBeforeFunc()
         lastRenderCache = self._lastRenderCacheSet
@@ -110,7 +110,7 @@ class QGridData:
 class QUICanvas:
     """ QUI画布绘制类 """
     def __init__(self, uiNode, parentPath = ""):
-        # type: (EasyScreenNodeCls | ScreenNodeWrapper, str) -> None
+        # type: (ScreenNodeWrapper, str) -> None
         self._conPath = None
         self._uiNodeRef = weakref.ref(uiNode)
         """ ui节点弱引用 """
@@ -151,7 +151,7 @@ class QUICanvas:
         return self._uiNodeRef()
 
     def rebuildUiNode(self, newUiNode):
-        # type: (EasyScreenNodeCls | ScreenNodeWrapper) -> None
+        # type: (ScreenNodeWrapper) -> None
         """ 重新绑定uiNode """
         if self._conPath != None:
             raise Exception("已构建控件的对象无法重新绑定UI节点")

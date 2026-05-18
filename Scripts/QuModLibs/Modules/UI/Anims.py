@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .Client import QUIControlFuntion, QUIAutoControlFuntion, EasyScreenNodeCls, ScreenNodeWrapper
+from .Client import QUIControlFuntion, QUIAutoControlFuntion, ScreenNodeWrapper
 from ...Client import compFactory, ListenForEvent, UnListenForEvent, levelId
 from ..Utils.TimeLine import QTimeLine
 from ...Util import QDRAIIEnv, QRAIIDelayed
@@ -58,7 +58,7 @@ class QTransform:
         return self
     
     def getUiNode(self):
-        # type: () -> EasyScreenNodeCls | ScreenNodeWrapper | None
+        # type: () -> ScreenNodeWrapper | None
         """ 获取UINode节点 """
         if self._uiNodeRef is None:
             return None
