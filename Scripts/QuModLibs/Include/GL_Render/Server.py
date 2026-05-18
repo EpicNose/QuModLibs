@@ -353,7 +353,7 @@ class GL_Service(BaseService):
         for _, resObj in self._entityResMap.items():
             TRY_EXEC_FUN(resObj.onTick)
 
-    @BaseService.Listen(Events.DelServerPlayerEvent)
+    @BaseService.Listen("DelServerPlayerEvent")
     def DelServerPlayerEvent(self, args):
         entityId = args["id"]
         if entityId in self._entityResMap:
@@ -365,7 +365,7 @@ class GL_Service(BaseService):
             if STATIC_IN.USE_PLAYER_LEVEL_GC:
                 Call("*", "GL_GCPlayer", entityId)
     
-    @BaseService.Listen(Events.AddServerPlayerEvent)
+    @BaseService.Listen("AddServerPlayerEvent")
     def AddServerPlayerEvent(self, args):
         playerId = args["id"]
         if self._PLGlobalRes:

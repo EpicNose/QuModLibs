@@ -61,7 +61,8 @@ def serviceBroadcast(eventObj):
     _serviceManager.broadcast(eventObj)
 
 # ================= 系统级业务逻辑注册 =================
-ListenForEvent(Events.OnScriptTickClient, _serviceManager, _serviceManager.onTick)
+ListenForEvent("OnScriptTickClient", _serviceManager, _serviceManager.onTick)
+
 def _SERVICE_MANAGER_ON_GAME_OVER():
     BaseService._CLOSE_STATE = True
     _serviceManager._closeState = True

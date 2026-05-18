@@ -8,17 +8,16 @@ class CallService:
 
     @staticmethod
     def _init():
-        POOL_ListenForEvent(Events.OnScriptTickServer, CallService.updateDataPacks)
+        POOL_ListenForEvent("OnScriptTickServer", CallService.updateDataPacks)
 
     @staticmethod
     def updateDataPacks(_={}):
         if len(CallService._delayCacheMap) <= 0:
-            POOL_UnListenForEvent(Events.OnScriptTickServer, CallService.updateDataPacks)
+            POOL_UnListenForEvent("OnScriptTickServer", CallService.updateDataPacks)
             return
         _cacheMap = CallService._delayCacheMap
         # 处理每个玩家的具体数据包
-        for playerId, datas in _cacheMap:
-            datas = _cacheMap[playerId]
+        for playerId, datas in _cacheMap.items():
             if datas:
                 Call(playerId, "__calls__", datas)
         CallService._delayCacheMap = {}

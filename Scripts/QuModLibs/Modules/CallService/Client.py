@@ -8,12 +8,12 @@ class CallService:
 
     @staticmethod
     def _init():
-        POOL_ListenForEvent(Events.OnScriptTickClient, CallService.updateDataPacks)
+        POOL_ListenForEvent("OnScriptTickClient", CallService.updateDataPacks)
 
     @staticmethod
     def updateDataPacks(_={}):
         if len(CallService._cache) <= 0:
-            POOL_UnListenForEvent(Events.OnScriptTickClient, CallService.updateDataPacks)
+            POOL_UnListenForEvent("OnScriptTickClient", CallService.updateDataPacks)
             return
         Call("__calls__", CallService._cache)
         CallService._cache = []
