@@ -7,6 +7,10 @@
 
 如需旧版的完整包体，请查阅 `release/1.4-full` 分支。
 
+### 补全库安装
+- Python 2：`pip install mc-netease-sdk`
+- Python 3：`pip install mc-netease-sdk-nyrev`
+
 ## 创建项目
 您可以通过以下步骤创建一个基于`QuModLibs`的网易MCMOD项目。
 ### 项目结构
