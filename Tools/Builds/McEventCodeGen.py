@@ -20,6 +20,8 @@ EVENT_NAMED_MAP = {
     "音效": "Sound",
     "控制": "Control",
     "联机大厅": "MultiplayerLobby",
+    "游戏设置": "GameSettings",
+    "物理": "Physics",
 }
 
 _TYPE_INFO_MAP = {  # Fuck Nethard

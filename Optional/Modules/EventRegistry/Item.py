@@ -551,6 +551,12 @@ class ItemPullOutCustomContainerServerEvent(object):
         return self.mArgs.get("z")
 
     @property
+    def dimension(self):
+        # type: () -> int
+        """ 容器方块所在的维度id """
+        return self.mArgs.get("dimension")
+
+    @property
     def cancel(self):
         # type: () -> bool
         """ 是否取消该操作，默认为false，事件中改为true时拒绝此次漏出物品的操作 """
@@ -596,6 +602,12 @@ class ItemPushInCustomContainerServerEvent(object):
         # type: () -> int
         """ 容器方块z坐标 """
         return self.mArgs.get("z")
+
+    @property
+    def dimension(self):
+        # type: () -> int
+        """ 容器方块所在的维度id """
+        return self.mArgs.get("dimension")
 
     @property
     def cancel(self):
@@ -784,6 +796,88 @@ class ItemUseOnAfterServerEvent(object):
         # type: () -> int
         """ 维度id """
         return self.mArgs.get("dimensionId")
+
+class LiquidClippedClientEvent(object):
+    """ [客户端] 玩家客户端点击流体时触发（支持原版流体与自定义流体） """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 玩家Id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def blockName(self):
+        # type: () -> str
+        """ 方块的identifier，包含命名空间及名称 """
+        return self.mArgs.get("blockName")
+
+    @property
+    def aux(self):
+        # type: () -> int
+        """ 方块附加值 """
+        return self.mArgs.get("aux")
+
+    @property
+    def blockPos(self):
+        # type: () -> tuple[int, int, int]
+        """ 方块坐标(x,y,z) """
+        return self.mArgs.get("blockPos")
+
+    @property
+    def dimensionId(self):
+        # type: () -> int
+        """ 维度id """
+        return self.mArgs.get("dimensionId")
+
+    @property
+    def floatPos(self):
+        # type: () -> tuple[float, float, float]
+        """ 点击的精准坐标(x,y,z) """
+        return self.mArgs.get("floatPos")
+
+class LiquidClippedServerEvent(object):
+    """ [服务端] 玩家服务端点击流体时触发（支持原版流体与自定义流体） """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 玩家Id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def blockName(self):
+        # type: () -> str
+        """ 方块的identifier，包含命名空间及名称 """
+        return self.mArgs.get("blockName")
+
+    @property
+    def aux(self):
+        # type: () -> int
+        """ 方块附加值 """
+        return self.mArgs.get("aux")
+
+    @property
+    def blockPos(self):
+        # type: () -> tuple[int, int, int]
+        """ 方块坐标(x,y,z) """
+        return self.mArgs.get("blockPos")
+
+    @property
+    def dimensionId(self):
+        # type: () -> int
+        """ 维度id """
+        return self.mArgs.get("dimensionId")
+
+    @property
+    def floatPos(self):
+        # type: () -> tuple[float, float, float]
+        """ 点击的精准坐标(x,y,z) """
+        return self.mArgs.get("floatPos")
 
 class OnCarriedNewItemChangedClientEvent(object):
     """ [客户端] 手持物品发生变化时，触发该事件；数量改变不会通知 """
@@ -993,6 +1087,130 @@ class OnPlayerBlockedByShieldBeforeServerEvent(object):
         """ 抵挡的伤害数值 """
         return self.mArgs.get("damage")
 
+class PlayerAddCustomContainerItemClientEvent(object):
+    """ [客户端] 玩家成功将物品添加到自定义容器时触发该事件 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def beforeItemDict(self):
+        # type: () -> dict
+        """ 操作前目标槽位的物品信息字典 """
+        return self.mArgs.get("beforeItemDict")
+
+    @property
+    def changedItemDict(self):
+        # type: () -> dict
+        """ 实际添加的物品的物品信息字典 """
+        return self.mArgs.get("changedItemDict")
+
+    @property
+    def afterItemDict(self):
+        # type: () -> dict
+        """ 操作后目标槽位的物品信息字典 """
+        return self.mArgs.get("afterItemDict")
+
+    @property
+    def collectionName(self):
+        # type: () -> str
+        """ 容器名称，对应容器json中"custom_description"字段 """
+        return self.mArgs.get("collectionName")
+
+    @property
+    def collectionType(self):
+        # type: () -> str
+        """ 容器类型，目前仅支持netease_container和netease_ui_container """
+        return self.mArgs.get("collectionType")
+
+    @property
+    def collectionIndex(self):
+        # type: () -> int
+        """ 容器槽位索引 """
+        return self.mArgs.get("collectionIndex")
+
+    @property
+    def x(self):
+        # type: () -> int
+        """ 容器方块x坐标 """
+        return self.mArgs.get("x")
+
+    @property
+    def y(self):
+        # type: () -> int
+        """ 容器方块y坐标 """
+        return self.mArgs.get("y")
+
+    @property
+    def z(self):
+        # type: () -> int
+        """ 容器方块z坐标 """
+        return self.mArgs.get("z")
+
+class PlayerAddCustomContainerItemServerEvent(object):
+    """ [服务端] 玩家向自定义容器中添加物品成功后触发该事件。该事件不可取消，仅用于通知物品添加操作已完成。 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def beforeItemDict(self):
+        # type: () -> dict
+        """ 操作前目标槽位的物品信息字典 """
+        return self.mArgs.get("beforeItemDict")
+
+    @property
+    def changedItemDict(self):
+        # type: () -> dict
+        """ 实际添加的物品的物品信息字典 """
+        return self.mArgs.get("changedItemDict")
+
+    @property
+    def afterItemDict(self):
+        # type: () -> dict
+        """ 操作后目标槽位的物品信息字典 """
+        return self.mArgs.get("afterItemDict")
+
+    @property
+    def collectionName(self):
+        # type: () -> str
+        """ 容器名称，对应容器json中"custom_description"字段 """
+        return self.mArgs.get("collectionName")
+
+    @property
+    def collectionType(self):
+        # type: () -> str
+        """ 容器类型，目前仅支持netease_container和netease_ui_container """
+        return self.mArgs.get("collectionType")
+
+    @property
+    def collectionIndex(self):
+        # type: () -> int
+        """ 目标容器索引 """
+        return self.mArgs.get("collectionIndex")
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 玩家id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def x(self):
+        # type: () -> int
+        """ 容器方块x坐标 """
+        return self.mArgs.get("x")
+
+    @property
+    def y(self):
+        # type: () -> int
+        """ 容器方块y坐标 """
+        return self.mArgs.get("y")
+
+    @property
+    def z(self):
+        # type: () -> int
+        """ 容器方块z坐标 """
+        return self.mArgs.get("z")
+
 class PlayerDropItemServerEvent(object):
     """ [服务端] 触发时机：玩家丢弃物品时触发 """
     def __init__(self, args=None):
@@ -1052,6 +1270,130 @@ class PlayerPickupArrowServerEvent(object):
     @pickupDelay.setter
     def pickupDelay(self, value):
         self.mArgs["pickupDelay"] = value
+
+class PlayerRemoveCustomContainerItemClientEvent(object):
+    """ [客户端] 玩家成功从自定义容器中移除物品时触发该事件 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def beforeItemDict(self):
+        # type: () -> dict
+        """ 操作前目标槽位的物品信息字典 """
+        return self.mArgs.get("beforeItemDict")
+
+    @property
+    def changedItemDict(self):
+        # type: () -> dict
+        """ 实际移除的物品的物品信息字典 """
+        return self.mArgs.get("changedItemDict")
+
+    @property
+    def afterItemDict(self):
+        # type: () -> dict
+        """ 操作后目标槽位的物品信息字典 """
+        return self.mArgs.get("afterItemDict")
+
+    @property
+    def collectionName(self):
+        # type: () -> str
+        """ 容器名称，对应容器json中"custom_description"字段 """
+        return self.mArgs.get("collectionName")
+
+    @property
+    def collectionType(self):
+        # type: () -> str
+        """ 容器类型，目前仅支持netease_container和netease_ui_container """
+        return self.mArgs.get("collectionType")
+
+    @property
+    def collectionIndex(self):
+        # type: () -> int
+        """ 容器槽位索引 """
+        return self.mArgs.get("collectionIndex")
+
+    @property
+    def x(self):
+        # type: () -> int
+        """ 容器方块x坐标 """
+        return self.mArgs.get("x")
+
+    @property
+    def y(self):
+        # type: () -> int
+        """ 容器方块y坐标 """
+        return self.mArgs.get("y")
+
+    @property
+    def z(self):
+        # type: () -> int
+        """ 容器方块z坐标 """
+        return self.mArgs.get("z")
+
+class PlayerRemoveCustomContainerItemServerEvent(object):
+    """ [服务端] 玩家从自定义容器中移除物品成功后触发该事件。该事件不可取消，仅用于通知物品移除操作已完成。 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def beforeItemDict(self):
+        # type: () -> dict
+        """ 操作前目标槽位的物品信息字典 """
+        return self.mArgs.get("beforeItemDict")
+
+    @property
+    def changedItemDict(self):
+        # type: () -> dict
+        """ 实际移除的物品的物品信息字典 """
+        return self.mArgs.get("changedItemDict")
+
+    @property
+    def afterItemDict(self):
+        # type: () -> dict
+        """ 操作后目标槽位的物品信息字典 """
+        return self.mArgs.get("afterItemDict")
+
+    @property
+    def collectionName(self):
+        # type: () -> str
+        """ 容器名称，对应容器json中"custom_description"字段 """
+        return self.mArgs.get("collectionName")
+
+    @property
+    def collectionType(self):
+        # type: () -> str
+        """ 容器类型，目前仅支持netease_container和netease_ui_container """
+        return self.mArgs.get("collectionType")
+
+    @property
+    def collectionIndex(self):
+        # type: () -> int
+        """ 目标容器索引 """
+        return self.mArgs.get("collectionIndex")
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 玩家id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def x(self):
+        # type: () -> int
+        """ 容器方块x坐标 """
+        return self.mArgs.get("x")
+
+    @property
+    def y(self):
+        # type: () -> int
+        """ 容器方块y坐标 """
+        return self.mArgs.get("y")
+
+    @property
+    def z(self):
+        # type: () -> int
+        """ 容器方块z坐标 """
+        return self.mArgs.get("z")
 
 class PlayerTryAddCustomContainerItemClientEvent(object):
     """ [客户端] 玩家尝试将物品添加到自定义容器时触发该事件 """

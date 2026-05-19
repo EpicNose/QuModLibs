@@ -729,6 +729,94 @@ class PlayerFeedEntityServerEvent(object):
         """ 是否取消触发，默认为False，若设为True，可阻止触发后续的生物喂养逻辑 """
         return self.mArgs.get("cancel")
 
+class PlayerFishingAfterServerEvent(object):
+    """ [服务端] 玩家钓鱼成功收杆后触发，在钓鱼掉落物生成后触发 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 钓鱼的玩家id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def hookEntity(self):
+        # type: () -> str
+        """ 鱼钩实体id """
+        return self.mArgs.get("hookEntity")
+
+    @property
+    def itemDict(self):
+        # type: () -> dict
+        """ 玩家手持鱼竿的物品信息字典 """
+        return self.mArgs.get("itemDict")
+
+    @property
+    def itemList(self):
+        # type: () -> list[dict]
+        """ 钓鱼获得的物品信息字典列表（只读） """
+        return self.mArgs.get("itemList")
+
+    @property
+    def itemEntityIdList(self):
+        # type: () -> list[str]
+        """ 钓鱼生成的掉落物实体id列表，与itemList一一对应 """
+        return self.mArgs.get("itemEntityIdList")
+
+class PlayerFishingServerEvent(object):
+    """ [服务端] 玩家钓鱼成功收杆时触发，在钓鱼掉落物生成前触发 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 钓鱼的玩家id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def hookEntity(self):
+        # type: () -> str
+        """ 鱼钩实体id """
+        return self.mArgs.get("hookEntity")
+
+    @property
+    def itemDict(self):
+        # type: () -> dict
+        """ 玩家手持鱼竿的物品信息字典 """
+        return self.mArgs.get("itemDict")
+
+    @property
+    def itemList(self):
+        # type: () -> list[dict]
+        """ 钓鱼获得的物品信息字典列表，支持修改。修改后需将itemChange设置为True """
+        return self.mArgs.get("itemList")
+
+    @itemList.setter
+    def itemList(self, value):
+        self.mArgs["itemList"] = value
+
+    @property
+    def itemChange(self):
+        # type: () -> bool
+        """ 是否修改了itemList，默认为False。当修改了itemList时需要设置为True才能生效 """
+        return self.mArgs.get("itemChange")
+
+    @itemChange.setter
+    def itemChange(self, value):
+        self.mArgs["itemChange"] = value
+
+    @property
+    def cancel(self):
+        # type: () -> bool
+        """ 是否取消钓鱼成功，设置为True时不会生成掉落物 """
+        return self.mArgs.get("cancel")
+
+    @cancel.setter
+    def cancel(self, value):
+        self.mArgs["cancel"] = value
+
 class PlayerHungerChangeServerEvent(object):
     """ [服务端] 玩家饥饿度变化时触发该事件 """
     def __init__(self, args=None):
@@ -988,6 +1076,39 @@ class PlayerSpinAttackServerEvent(object):
         # type: () -> bool
         """ True时代表开始快速旋转攻击；False时代表结束快速旋转攻击 """
         return self.mArgs.get("isStart")
+
+class PlayerStartFishingServerEvent(object):
+    """ [服务端] 玩家开始钓鱼，生成鱼钩时在服务端触发 """
+    def __init__(self, args=None):
+        self.mArgs = args or dict()
+
+    @property
+    def playerId(self):
+        # type: () -> str
+        """ 钓鱼成功的玩家id """
+        return self.mArgs.get("playerId")
+
+    @property
+    def hookEntity(self):
+        # type: () -> str
+        """ 鱼钩实体id """
+        return self.mArgs.get("hookEntity")
+
+    @property
+    def itemDict(self):
+        # type: () -> dict
+        """ 玩家手持鱼竿的物品信息字典 """
+        return self.mArgs.get("itemDict")
+
+    @property
+    def cancel(self):
+        # type: () -> bool
+        """ 是否取消，设置为True时会取消生成鱼漂 """
+        return self.mArgs.get("cancel")
+
+    @cancel.setter
+    def cancel(self, value):
+        self.mArgs["cancel"] = value
 
 class PlayerStopSleepServerEvent(object):
     """ [服务端] 玩家停止睡觉 """
