@@ -221,89 +221,6 @@ class Math:
         unitVector = tuple((i / length) for i in vector)
         return unitVector
 
-class ObjectConversion:
-    """ 对象转换工具类 By Zero123
-        此工具类用于旧版本中解决自定义数据对象的序列化与反序列化加载 用于持久化储存数据/传输数据
-        新版本推荐使用pickle模块
-    """
-
-    baseType = set([
-        "str", "list", "float", "int", "bool", "dict", "unicode"
-    ])
-
-    _typeKey = "__type__"
-    _valueKey = "__value__"
-
-    @staticmethod
-    def getClsPathWithClass(clsObj):
-        return clsObj.__module__ + "." + clsObj.__name__
-
-    @staticmethod
-    def getClsWithPath(path):
-        # type: (str) -> object
-        lastPos = path.rfind(".")
-        impObj = Unknown
-        return getattr(impObj, path[lastPos+1:])
-
-    @staticmethod
-    def getClsPath(data):
-        return data.__class__.__module__ + "." + data.__class__.__name__
-
-    @staticmethod
-    def dumpsObject(data):
-        # type: (object) -> dict
-        """ 序列化对象 """
-        if data is None:
-            return data
-        elif type(data).__name__ in ObjectConversion.baseType:
-            if isinstance(data, list):
-                return [ObjectConversion.dumpsObject(v) for v in data]
-            elif isinstance(data, dict):
-                return {str(k):ObjectConversion.dumpsObject(v) for k, v in data.items()}
-            return data
-        value = {
-            k: ObjectConversion.dumpsObject(getattr(data, k))
-            for k in dir(data) if not k.startswith("__") and not hasattr(getattr(data, k), "__call__") and not isinstance(getattr(data, k), type)
-        }
-        return {
-            ObjectConversion._typeKey: ObjectConversion.getClsPath(data),
-            ObjectConversion._valueKey: value
-        }
-
-    @staticmethod
-    def getType(data):
-        # type: (object) -> str | None
-        if data is None:
-            return None
-        if isinstance(data, dict) and ObjectConversion._typeKey in data and ObjectConversion._valueKey in data:
-            return data[ObjectConversion._typeKey]
-        return type(data).__name__
-
-    @classmethod
-    def loadDumpsObject(cls, data):
-        # type: (object) -> object | dict
-        """ 加载序列化对象 (当类匹配失败/构造失败将会抛出异常) """
-        dataType = cls.getType(data)
-        if dataType is None:
-            return None
-        if dataType in cls.baseType:
-            # 原生数据类型
-            if isinstance(data, list):
-                return [cls.loadDumpsObject(v) for v in data]
-            elif isinstance(data, dict):
-                return {str(k):cls.loadDumpsObject(v) for k, v in data.items()}
-            return data
-        dataCls = cls.getClsWithPath(data[cls._typeKey])
-        value = data[cls._valueKey]
-        createKey = "create"
-        if hasattr(dataCls, createKey):
-            # 使用静态构造方法
-            obj = getattr(dataCls, createKey)()
-            for k, v in cls.loadDumpsObject(value).items():
-                setattr(obj, k, v)
-            return obj
-        return dataCls(**cls.loadDumpsObject(value))
-
 class QuFreeObject(object):
     def free(self):
         pass
@@ -362,11 +279,23 @@ def QConstInit(funcObj):
         TRY_EXEC_FUN(funcObj)
     return funcObj
 
+@Singleton
+def _GET_RUNTIME_INFO():
+    from .IN import RuntimeService
+    return RuntimeService
+
 class QStruct:
     """ 结构体 用于通用数据模型约定(即不涉及任何API) 应定义在Server/Client以外的通用文件 同理Struct也不应该持有任何涉及端侧API的内容 """
     _SIGN_FORMAT = "_QSTRUCT[{}]"
+
+    @staticmethod
+    def REQUIRE_PICKLE_ENABLED():
+        if not _GET_RUNTIME_INFO()._ENABLE_PICKLE:
+            raise NotImplementedError("Pickle serialization is not enabled")
+
     def dumps(self):
         """ 序列化对象 """
+        QStruct.REQUIRE_PICKLE_ENABLED()
         return _pickle.dumps(self)
 
     def signDumps(self):
@@ -389,12 +318,14 @@ class QStruct:
     def loads(data):
         # type: (str) -> QStruct
         """ 反序列化加载对象 """
+        QStruct.REQUIRE_PICKLE_ENABLED()
         return _pickle.loads(data)
 
     @staticmethod
     def loadSignData(data):
         # type: (list) -> QStruct
         """ 反序列化加载Sign对象表(不会校验) """
+        QStruct.REQUIRE_PICKLE_ENABLED()
         return _pickle.loads(data[1])
 
     def onNetUnPack(self):

@@ -217,30 +217,30 @@ class BaseAutoStoreCls(BaseStoreCls):
             if not k.startswith("__") and not callable(v):
                 setattr(cls, k, v)
 
-    @classmethod
-    def updateOldDataCls(cls, oldCls):
-        # type: (type) -> None
-        """
-        自动合并升级旧数据类到新数据类（随后丢弃老数据类）
-        ```python
-        # @QuDataStorage.AutoSave(1)
-        # updateOldDataCls从磁盘中读取数据，不再需要AutoSave拉取，需禁用装饰器
-        class DataStore:
-            VAR1 = 123
-            VAR2 = "Hello"
+    # @classmethod
+    # def updateOldDataCls(cls, oldCls):
+    #     # type: (type) -> None
+    #     """
+    #     自动合并升级旧数据类到新数据类（随后丢弃老数据类）
+    #     ```python
+    #     # @QuDataStorage.AutoSave(1)
+    #     # updateOldDataCls从磁盘中读取数据，不再需要AutoSave拉取，需禁用装饰器
+    #     class DataStore:
+    #         VAR1 = 123
+    #         VAR2 = "Hello"
 
-        class NewDataStore(DataStore, ServerAutoStoreCls):
-            # 继承旧版数据兼容层
-            pass
+    #     class NewDataStore(DataStore, ServerAutoStoreCls):
+    #         # 继承旧版数据兼容层
+    #         pass
         
-        # 自动合并(若需极致性能还可以额外维护一个状态值避免二次IO)
-        NewDataStore.updateOldDataCls(DataStore)
-        ```
-        """
-        if not issubclass(cls, oldCls):
-            raise TypeError("新数据类必须继承旧版数据类确保数据兼容性")
-        from ....QuModLibs.Util import ObjectConversion
-        cls._updateOldDataCls(ObjectConversion.getClsPathWithClass(oldCls))
+    #     # 自动合并(若需极致性能还可以额外维护一个状态值避免二次IO)
+    #     NewDataStore.updateOldDataCls(DataStore)
+    #     ```
+    #     """
+    #     if not issubclass(cls, oldCls):
+    #         raise TypeError("新数据类必须继承旧版数据类确保数据兼容性")
+    #     from ....QuModLibs.Util import ObjectConversion
+    #     cls._updateOldDataCls(ObjectConversion.getClsPathWithClass(oldCls))
     
     @classmethod
     def _updateOldDataCls(cls, oldDataKey):

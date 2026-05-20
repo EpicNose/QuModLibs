@@ -24,6 +24,8 @@ class RuntimeService:
     _globalEnvRefCount = 0
     _envInitHandler = []       # type: list[function]
     _envDestroyHandler = []    # type: list[function]
+    # PICKLE
+    _ENABLE_PICKLE = False
 
     @staticmethod
     def addGlobalEnvRef():

@@ -38,23 +38,6 @@ class QTimedExpiryMap:
         self._lastAutoGcTime = 0
         self._saveMap = {}      # type: dict[str, QTimedExpiryArgs]
     
-    @classmethod
-    def create(cls):
-        return cls()
-    
-    @staticmethod
-    def loads(_dic):
-        # type: (dict) -> QTimedExpiryMap
-        """ 加载dict对象 """
-        from ...Util import ObjectConversion
-        return ObjectConversion.loadDumpsObject(_dic)
-
-    def dumps(self):
-        # type: () -> dict
-        """ 格式化输出对象 (转换成Dict) """
-        from ...Util import ObjectConversion
-        return ObjectConversion.dumpsObject(self)
-    
     def __str__(self):
         _dictText = str({k:v.get() for k, v in self._saveMap.items()})
         return "{}({})<{}>".format(self.__class__.__name__, self.length(), _dictText[1:-1])

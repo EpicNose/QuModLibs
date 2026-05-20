@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # 客户端端基本功能模块 为减缓IO开销 常用的功能均放置在该文件 其他功能按需导入使用
 from .Math import Vec3, Vec2, QBox3D
-from .Util import Unknown, InitOperation, errorPrint, _eventsRedirect, Singleton, \
-    ObjectConversion as __ObjectConversion
+from .Util import Unknown, InitOperation, errorPrint, _eventsRedirect, Singleton
 from .Systems.Loader.Client import LoaderSystem as _LoaderSystem, CustomEngineEvent
 import mod.client.extraClientApi as __extraClientApi
 from . import IN as __IN

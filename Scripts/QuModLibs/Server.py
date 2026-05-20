@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from .Math import Vec3, Vec2, QBox3D
-from .Util import Unknown, InitOperation, errorPrint, _eventsRedirect, Singleton, \
-    ObjectConversion as __ObjectConversion
+from .Util import Unknown, InitOperation, errorPrint, _eventsRedirect, Singleton
 from .Systems.Loader.Server import LoaderSystem as _LoaderSystem, CustomEngineEvent
 from .IN import ModDirName
 import mod.server.extraServerApi as __extraServerApi
