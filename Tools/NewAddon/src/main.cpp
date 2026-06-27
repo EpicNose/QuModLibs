@@ -24,7 +24,7 @@ static const std::string MANIFEST_TEMPLATE = R"manifest({
         "name": "<name>",
         "uuid": "<uuid1>",
         "version": [0, 0, 1],
-        "min_engine_version": [1, 18, 0]
+        "min_engine_version": [1, 20, 0]
     },
     "modules": [
         {
