@@ -222,6 +222,24 @@ static std::string toDisplayPath(std::string path) {
     return path;
 }
 
+static bool tryGetTargetDirectoryFromArgs(int argc, char** argv, std::string& currentDir, std::string& errorMessage) {
+    if (argc < 2) {
+        return false;
+    }
+    const std::string_view argPath(argv[1]);
+    // 跳过引号
+    if (argPath.size() >= 2 && argPath.front() == '"' && argPath.back() == '"') {
+        currentDir = argPath.substr(1, argPath.size() - 2);
+    } else {
+        currentDir = argPath;
+    }
+    if (currentDir.empty()) {
+        errorMessage = "提供的路径参数为空";
+        return false;
+    }
+    return true;
+}
+
 static bool getCurrentDirectoryPath(std::string& currentDir, std::string& errorMessage) {
     char* rawPath = _getcwd(nullptr, 0);
     if (rawPath == nullptr) {
@@ -303,7 +321,7 @@ static void logGeneratedPack(
         artifact.content.c_str());
 }
 
-int main() {
+int main(int argc, char** argv) {
 #ifdef _WIN32
     // Set the console output code page to UTF-8
     SetConsoleOutputCP(CP_UTF8);
@@ -314,7 +332,10 @@ int main() {
 
     std::string targetDir;
     std::string errorMessage;
-    if (!getCurrentDirectoryPath(targetDir, errorMessage)) {
+    if (!tryGetTargetDirectoryFromArgs(argc, argv, targetDir, errorMessage) &&
+        !getCurrentDirectoryPath(targetDir, errorMessage)
+        ) 
+    {
         std::fprintf(stderr, "%s\n", errorMessage.c_str());
         exitCode = 1;
     } else {
